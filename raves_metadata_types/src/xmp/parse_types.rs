@@ -88,6 +88,12 @@ pub enum XmpKind {
     ///
     /// In XML, this is `rdf:Alt`.
     Alternatives(&'static XmpKind),
+
+    /// A URI (or URL).
+    ///
+    /// In XML, it's represented by an `rdf:resource="{THE URI}"` attribute on
+    /// its element.
+    Uri,
 }
 
 /// Sorry for the long name, but what you need to know is that some struct
