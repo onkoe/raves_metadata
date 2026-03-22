@@ -24,8 +24,15 @@ pub struct XmpElement {
 /// All the possible types an XMP value may have.
 #[derive(Clone, Debug, PartialEq, PartialOrd)]
 pub enum XmpValue {
+    /// A "simple" XMP value is a primitive that can be parsed directly as a
+    /// string, usually with a range of valid storage options.
     Simple(XmpPrimitive),
-    Struct(Vec<XmpValueStructField>),
+
+    /// A struct contains some fields.
+    Struct(
+        /// The stored fields.
+        Vec<XmpValueStructField>,
+    ),
 
     /// A union is similar to a struct, but its tag determines which fields
     /// are stored at the moment.
@@ -61,6 +68,12 @@ pub enum XmpValue {
         /// Each entry is a `(key, value)` pair.
         list: Vec<(String, XmpElement)>,
     },
+
+    /// This variant codes specifically for URIs.
+    ///
+    /// It's necessary due to the XMP standard's URIs/URLs parsing
+    /// requirements. (see: ISO 16684-1:2012, section 7.5)
+    Uri(String),
 }
 
 impl core::hash::Hash for XmpValue {
@@ -90,6 +103,7 @@ impl core::hash::Hash for XmpValue {
                 chosen.hash(state);
                 list.hash(state);
             }
+            XmpValue::Uri(string) => string.hash(state),
         }
     }
 }

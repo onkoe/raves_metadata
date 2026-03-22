@@ -875,8 +875,8 @@ pub const TRACK: Kind = Kind::Struct({
         },
     ]
 });
-pub const URI: Kind = Kind::Simple(Prim::Text);
-pub const URL: Kind = Kind::Simple(Prim::Text);
+pub const URI: Kind = Kind::Uri;
+pub const URL: Kind = URI;
 pub const VERSION: Kind = Kind::Struct(&[
     Field {
         ident: Ident::Namespaced {
