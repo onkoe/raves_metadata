@@ -19,6 +19,7 @@ pub mod arrays;
 pub mod prims;
 pub mod structs;
 pub mod unions;
+pub mod uris;
 
 pub trait XmpElementExt {
     /// Uses an element's schema to parse it.
@@ -60,6 +61,11 @@ impl XmpElementExt for Element {
                     .to_string(),
                 prim,
             )?),
+
+            // we're a URI!
+            //
+            // simply call its handler function
+            Kind::Uri => uris::value_uri(self, Some(schema)),
 
             // we're a struct-like kind.
             //
@@ -130,7 +136,23 @@ impl XmpElementExt for Element {
             };
         }
 
-        // 4. if we have text at this point, we can use that as a `Text`
+        // 4. if we have no children, no text, and at least one attribute, we
+        // should check if we're a URI.
+        //
+        // URIs store their data in the `rdf:
+        if self.children.is_empty() && self.get_text().is_none() && !self.attributes.is_empty() {
+            log::trace!("Checking if generic value is a URI...");
+
+            // parse it as a URI
+            if let Ok(xmp_element) = uris::value_uri(self, None) {
+                log::trace!("Given value was a URI!");
+                return Ok(xmp_element);
+            } else {
+                log::trace!("Not a URI.")
+            }
+        }
+
+        // 5. if we have text at this point, we can use that as a `Text`
         // primitive.
         //
         // but, other than that, we're out of ideas...

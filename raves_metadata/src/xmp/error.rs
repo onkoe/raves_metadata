@@ -140,7 +140,7 @@ impl From<xmltree::ParseError> for XmpError {
 /// into `None` with `.inspect_err(log::error!(/* ... */)).ok()`, which
 /// provides logs, but doesn't give the user direct error values to sift
 /// through.
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum XmpParsingError {
     //
     //
@@ -263,6 +263,28 @@ pub enum XmpParsingError {
         /// Unexpected scheme that was found.
         weird_schema: &'static XmpKind,
     },
+
+    //
+    //
+    //
+    //
+    //
+    //
+    //
+    // uri
+    //
+    /// A URI value had no `rdf:resource` attribute.
+    UriHadNoRdfResource,
+
+    /// A URI value had children, but child elements are disallowed by the
+    /// standard.
+    UriHadChildren {
+        /// How many children the XML element had.
+        number_of_children: u64,
+    },
+
+    /// A URI value had inner text, but that's not allowed by the standard.
+    UriHadInnerText,
 
     //
     //
@@ -395,6 +417,29 @@ impl core::fmt::Display for XmpParsingError {
                 wasn't for an array. \n\
 - schema: {weird_schema:?}",
             ),
+
+            //
+            //
+            //
+            //
+            //
+            //
+            //
+            // URIs
+            //
+            XmpParsingError::UriHadNoRdfResource => {
+                f.write_str("A URI value had no `rdf:resource` attribute.")
+            }
+            XmpParsingError::UriHadChildren { number_of_children } => write!(
+                f,
+                "A URI value had {number_of_children} children, \
+                but child elements are disallowed by the standard."
+            ),
+            XmpParsingError::UriHadInnerText => f.write_str(
+                "A URI value had inner text, \
+                    but that's not allowed by the standard.",
+            ),
+
             //
             //
             //
