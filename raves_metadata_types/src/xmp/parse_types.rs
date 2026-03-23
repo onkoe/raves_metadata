@@ -107,9 +107,8 @@ pub struct XmpKindStructFieldIdent {
 }
 
 impl XmpKindStructFieldIdent {
-    pub fn ns(&'static self) -> Option<&'static str> {
-        let CHANGE_THIS_TO_RETURN_STR_DIRECTLY = ();
-        Some(self.namespace)
+    pub fn ns(&'static self) -> &'static str {
+        self.namespace
     }
 
     pub fn name(&'static self) -> &'static str {

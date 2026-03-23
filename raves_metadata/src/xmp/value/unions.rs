@@ -80,27 +80,10 @@ pub fn value_union(
         // check if we know this field
         let mut known_field = false;
         for (field, (known_ns, known_name)) in &known_pairs {
-            // if the namespaces don't match, it's not this pair!
-            //
-            // sorry for this being so sloppy - need to compare both the
-            // Some + None cases, and we don't own the &'static str...
-            let ns_mismatch = match c_ns {
-                Some(c_ns) => Some(c_ns.as_str()) != known_ns.map(|k: &str| k),
-                None => known_ns.is_some(),
-            };
-            if ns_mismatch {
+            if !(c_ns.as_deref() == Some(known_ns) && c_name == known_name) {
                 log::trace!(
-                    "Namespaces don't match - not a known field. found: `{c_ns:?}`, want: `{known_ns:?}`."
-                );
-                continue;
-            }
-
-            // if the names don't match, we can skip the pair
-            if c_name != *known_name {
-                log::trace!(
-                    "Names don't match - not a known field. \
-                    found: {c_name} \
-                    want: {known_name}"
+                    "Field does not match a known (namespace, name) pair. \
+                    found: `({c_ns:?}, {c_name})`, want: `({known_ns:?}, {known_name})`."
                 );
                 continue;
             }
@@ -134,10 +117,8 @@ pub fn value_union(
         }
 
         // so does the namespace
-        let namespaces_match = match f.namespace() {
-            Some(s) => Some(s.as_str()) == discriminant.ident.ns(),
-            None => discriminant.ident.ns().is_none(),
-        };
+        let namespaces_match =
+            f.namespace().map(String::as_str) == Some(discriminant.ident.namespace);
         log::trace!("finding discrim... `namespaces_match: bool = {namespaces_match}`");
         if !namespaces_match {
             log::trace!(
