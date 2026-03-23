@@ -51,7 +51,7 @@ mod tests {
             primitives::{Primitive, PrimitiveTy},
             tags::{Ifd0Tag, KnownTag},
         },
-        xmp::{XmpElement, XmpPrimitive, XmpValue},
+        xmp::{XmpElement, XmpIdent, XmpPrimitive, XmpValue},
     };
 
     use crate::{MetadataProvider, providers::jpeg::Jpeg, util::logger};
@@ -99,26 +99,32 @@ mod tests {
             xmp.document()
                 .values_ref()
                 .iter()
-                .find(|f| f.prefix == "dc" && f.name == "subject")
+                .find(|f| f.ident.prefix == "dc" && f.ident.name == "subject")
                 .unwrap(),
             &XmpElement {
-                namespace: "http://purl.org/dc/elements/1.1/".into(),
-                prefix: "dc".into(),
-                name: "subject".into(),
+                ident: XmpIdent::new_with_one_namespace_pair(
+                    "dc".into(),
+                    "http://purl.org/dc/elements/1.1/".into(),
+                    "subject".into(),
+                ),
                 value: XmpValue::UnorderedArray(vec![
                     XmpElement {
-                        namespace: "http://www.w3.org/1999/02/22-rdf-syntax-ns#".into(),
-                        prefix: "rdf".into(),
-                        name: "li".into(),
-                        value: XmpValue::Simple(XmpPrimitive::Text("cat".into()))
+                        ident: XmpIdent::new_with_one_namespace_pair(
+                            "rdf".into(),
+                            "http://www.w3.org/1999/02/22-rdf-syntax-ns#".into(),
+                            "li".into(),
+                        ),
+                        value: XmpValue::Simple(XmpPrimitive::Text("cat".into())),
                     },
                     XmpElement {
-                        namespace: "http://www.w3.org/1999/02/22-rdf-syntax-ns#".into(),
-                        prefix: "rdf".into(),
-                        name: "li".into(),
-                        value: XmpValue::Simple(XmpPrimitive::Text("cute".into()))
+                        ident: XmpIdent::new_with_one_namespace_pair(
+                            "rdf".into(),
+                            "http://www.w3.org/1999/02/22-rdf-syntax-ns#".into(),
+                            "li".into(),
+                        ),
+                        value: XmpValue::Simple(XmpPrimitive::Text("cute".into())),
                     },
-                ])
+                ]),
             }
         );
     }
@@ -180,13 +186,15 @@ mod tests {
             xmp.document()
                 .values_ref()
                 .iter()
-                .find(|f| f.prefix == "aux" && f.name == "Lens")
+                .find(|f| f.ident.prefix == "aux" && f.ident.name == "Lens")
                 .unwrap(),
             &XmpElement {
-                namespace: "http://ns.adobe.com/exif/1.0/aux/".into(),
-                prefix: "aux".into(),
-                name: "Lens".into(),
-                value: XmpValue::Simple(XmpPrimitive::Text("Samsung Galaxy S7 Rear Camera".into()))
+                ident: XmpIdent::new_with_one_namespace_pair(
+                    "aux".into(),
+                    "http://ns.adobe.com/exif/1.0/aux/".into(),
+                    "Lens".into(),
+                ),
+                value: XmpValue::Simple(XmpPrimitive::Text("Samsung Galaxy S7 Rear Camera".into())),
             }
         );
     }
@@ -208,7 +216,7 @@ mod tests {
             xmp.document()
                 .values_ref()
                 .iter()
-                .any(|v| v.name == "Data" && v.prefix == "GImage")
+                .any(|v| v.ident.name == "Data" && v.ident.prefix == "GImage")
         );
     }
 }

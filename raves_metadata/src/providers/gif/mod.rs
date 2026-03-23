@@ -427,7 +427,7 @@ impl MetadataProvider for Gif {
 
 #[cfg(test)]
 mod tests {
-    use raves_metadata_types::xmp::XmpElement;
+    use raves_metadata_types::xmp::{XmpElement, XmpIdent, XmpPrimitive, XmpValue};
 
     use crate::{MetadataProvider, magic_number::AnyProvider, util::logger};
 
@@ -468,56 +468,50 @@ mod tests {
             .expect("xmp should have parsed correctly");
 
         let mut actual = xmp.document().values_ref().to_vec();
-        actual.sort_by(|a, b| a.name.cmp(&b.name));
+        actual.sort_by(|a, b| a.ident.name.cmp(&b.ident.name));
 
         let mut expected = vec![
             XmpElement {
-                namespace: "http://purl.org/dc/elements/1.1/".into(),
-                prefix: "dc".into(),
-                name: "subject".into(),
-                value: raves_metadata_types::xmp::XmpValue::UnorderedArray(vec![XmpElement {
-                    namespace: "http://www.w3.org/1999/02/22-rdf-syntax-ns#".into(),
-                    prefix: "rdf".into(),
-                    name: "li".into(),
-                    value: raves_metadata_types::xmp::XmpValue::Simple(
-                        raves_metadata_types::xmp::XmpPrimitive::Text(
-                            "this better save xmp".into(),
-                        ),
+                ident: XmpIdent::new_with_one_namespace_pair(
+                    "dc".into(),
+                    "http://purl.org/dc/elements/1.1/".into(),
+                    "subject".into(),
+                ),
+                value: XmpValue::UnorderedArray(vec![XmpElement {
+                    ident: XmpIdent::new_with_one_namespace_pair(
+                        "rdf".into(),
+                        "http://www.w3.org/1999/02/22-rdf-syntax-ns#".into(),
+                        "li".into(),
                     ),
+                    value: XmpValue::Simple(XmpPrimitive::Text("this better save xmp".into())),
                 }]),
             },
             XmpElement {
-                namespace: "http://ns.adobe.com/xap/1.0/".into(),
-                prefix: "xmp".into(),
-                name: "CreateDate".into(),
-                value: raves_metadata_types::xmp::XmpValue::Simple(
-                    raves_metadata_types::xmp::XmpPrimitive::Date(
-                        "2026-02-15T02:20:20-06:00".into(),
-                    ),
+                ident: XmpIdent::new_with_one_namespace_pair(
+                    "xmp".into(),
+                    "http://ns.adobe.com/xap/1.0/".into(),
+                    "CreateDate".into(),
                 ),
+                value: XmpValue::Simple(XmpPrimitive::Date("2026-02-15T02:20:20-06:00".into())),
             },
             XmpElement {
-                namespace: "http://ns.adobe.com/xap/1.0/".into(),
-                prefix: "xmp".into(),
-                name: "MetadataDate".into(),
-                value: raves_metadata_types::xmp::XmpValue::Simple(
-                    raves_metadata_types::xmp::XmpPrimitive::Date(
-                        "2026-02-15T02:20:31-06:00".into(),
-                    ),
+                ident: XmpIdent::new_with_one_namespace_pair(
+                    "xmp".into(),
+                    "http://ns.adobe.com/xap/1.0/".into(),
+                    "MetadataDate".into(),
                 ),
+                value: XmpValue::Simple(XmpPrimitive::Date("2026-02-15T02:20:31-06:00".into())),
             },
             XmpElement {
-                namespace: "http://ns.adobe.com/xap/1.0/".into(),
-                prefix: "xmp".into(),
-                name: "ModifyDate".into(),
-                value: raves_metadata_types::xmp::XmpValue::Simple(
-                    raves_metadata_types::xmp::XmpPrimitive::Date(
-                        "2026-02-15T02:20:31-06:00".into(),
-                    ),
+                ident: XmpIdent::new_with_one_namespace_pair(
+                    "xmp".into(),
+                    "http://ns.adobe.com/xap/1.0/".into(),
+                    "ModifyDate".into(),
                 ),
+                value: XmpValue::Simple(XmpPrimitive::Date("2026-02-15T02:20:31-06:00".into())),
             },
         ];
-        expected.sort_by(|a, b| a.name.cmp(&b.name));
+        expected.sort_by(|a, b| a.ident.name.cmp(&b.ident.name));
 
         assert_eq!(actual, expected);
     }
@@ -546,25 +540,27 @@ mod tests {
             xmp.document().values_ref(),
             &[
                 XmpElement {
-                    namespace: "http://purl.org/dc/elements/1.1/".into(),
-                    prefix: "dc".into(),
-                    name: "creator".into(),
-                    value: raves_metadata_types::xmp::XmpValue::OrderedArray(vec![XmpElement {
-                        namespace: "http://www.w3.org/1999/02/22-rdf-syntax-ns#".into(),
-                        prefix: "rdf".into(),
-                        name: "li".into(),
-                        value: raves_metadata_types::xmp::XmpValue::Simple(
-                            raves_metadata_types::xmp::XmpPrimitive::Text("Barrett Ray".into())
-                        )
-                    }])
+                    ident: XmpIdent::new_with_one_namespace_pair(
+                        "dc".into(),
+                        "http://purl.org/dc/elements/1.1/".into(),
+                        "creator".into(),
+                    ),
+                    value: XmpValue::OrderedArray(vec![XmpElement {
+                        ident: XmpIdent::new_with_one_namespace_pair(
+                            "rdf".into(),
+                            "http://www.w3.org/1999/02/22-rdf-syntax-ns#".into(),
+                            "li".into(),
+                        ),
+                        value: XmpValue::Simple(XmpPrimitive::Text("Barrett Ray".into())),
+                    }]),
                 },
                 XmpElement {
-                    namespace: "http://ns.adobe.com/xap/1.0/".into(),
-                    prefix: "xmp".into(),
-                    name: "Nickname".into(),
-                    value: raves_metadata_types::xmp::XmpValue::Simple(
-                        raves_metadata_types::xmp::XmpPrimitive::Text("cool image".into())
-                    )
+                    ident: XmpIdent::new_with_one_namespace_pair(
+                        "xmp".into(),
+                        "http://ns.adobe.com/xap/1.0/".into(),
+                        "Nickname".into(),
+                    ),
+                    value: XmpValue::Simple(XmpPrimitive::Text("cool image".into())),
                 },
             ]
         );

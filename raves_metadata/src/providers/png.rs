@@ -347,7 +347,7 @@ mod tests {
             primitives::{Primitive, Rational},
             tags::{Ifd0Tag, KnownTag},
         },
-        xmp::{XmpElement, XmpValue},
+        xmp::{XmpElement, XmpIdent, XmpValue},
     };
 
     use crate::{MetadataProvider as _, providers::png::Png, util::logger};
@@ -463,9 +463,11 @@ mod tests {
                 .first()
                 .expect("must have an item"),
             &XmpElement {
-                namespace: "https://barretts.club".into(),
-                prefix: "my_ns".into(),
-                name: "MyStruct".into(),
+                ident: XmpIdent::new_with_one_namespace_pair(
+                    "my_ns".into(),
+                    "https://barretts.club".into(),
+                    "MyStruct".into(),
+                ),
                 value: XmpValue::Struct(Vec::new()),
             },
             "found struct should match the expected (right) side"

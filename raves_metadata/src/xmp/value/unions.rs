@@ -123,12 +123,12 @@ pub fn value_union(
     // find the discriminant (or err)
     let Some(found_discriminant) = expected_fields.iter().find(|f| {
         // the names have to match
-        let names_match = f.ident() == discriminant.ident.name();
+        let names_match = f.name() == discriminant.ident.name();
         log::trace!("finding discrim... `names_match: bool = {names_match}`");
         if !names_match {
             log::trace!(
                 "name for this field was: `{}`. expected: `{}`",
-                f.ident(),
+                f.name(),
                 discriminant.ident.name()
             );
         }
@@ -172,7 +172,7 @@ pub fn value_union(
 mod tests {
     use raves_metadata_types::{
         xmp::parse_types::XmpKind,
-        xmp::{XmpElement, XmpPrimitive, XmpValue, XmpValueStructField},
+        xmp::{XmpElement, XmpIdent, XmpPrimitive, XmpValue, XmpValueStructField},
     };
     use xmltree::Element;
 
@@ -219,57 +219,80 @@ mod tests {
         assert_eq!(
             parsed_union,
             XmpElement {
-                namespace: "http://www.w3.org/1999/02/22-rdf-syntax-ns#".into(),
-                prefix: "rdf".into(),
-                name: "li".into(),
+                ident: XmpIdent::new_with_one_namespace_pair(
+                    "rdf".into(),
+                    "http://www.w3.org/1999/02/22-rdf-syntax-ns#".into(),
+                    "li".into(),
+                ),
                 value: XmpValue::Union {
                     discriminant: Box::new(XmpValueStructField::Value {
-                        ident: "mode".into(),
-                        namespace: Some("http://ns.adobe.com/xap/1.0/g/".into()),
-                        value: XmpValue::Simple(XmpPrimitive::Text("CMYK".into()))
+                        ident: XmpIdent::new_with_one_namespace_pair(
+                            "xmpG".into(),
+                            "http://ns.adobe.com/xap/1.0/g/".into(),
+                            "mode".into(),
+                        ),
+                        value: XmpValue::Simple(XmpPrimitive::Text("CMYK".into())),
                     }),
                     expected_fields: vec![
-                        // always fields: `swatchName` + `mode`
                         XmpValueStructField::Value {
-                            ident: "swatchName".into(),
-                            namespace: Some("http://ns.adobe.com/xap/1.0/g/".into()),
-                            value: XmpValue::Simple(XmpPrimitive::Text("black".into()))
+                            ident: XmpIdent::new_with_one_namespace_pair(
+                                "xmpG".into(),
+                                "http://ns.adobe.com/xap/1.0/g/".into(),
+                                "swatchName".into(),
+                            ),
+                            value: XmpValue::Simple(XmpPrimitive::Text("black".into())),
                         },
                         XmpValueStructField::Value {
-                            ident: "mode".into(),
-                            namespace: Some("http://ns.adobe.com/xap/1.0/g/".into()),
-                            value: XmpValue::Simple(XmpPrimitive::Text("CMYK".into()))
+                            ident: XmpIdent::new_with_one_namespace_pair(
+                                "xmpG".into(),
+                                "http://ns.adobe.com/xap/1.0/g/".into(),
+                                "mode".into(),
+                            ),
+                            value: XmpValue::Simple(XmpPrimitive::Text("CMYK".into())),
                         },
                         XmpValueStructField::Value {
-                            ident: "type".into(),
-                            namespace: Some("http://ns.adobe.com/xap/1.0/g/".into()),
-                            value: XmpValue::Simple(XmpPrimitive::Text("PROCESS".into()))
-                        },
-                        //
-                        // optional fields (for mode::CMYK)
-                        XmpValueStructField::Value {
-                            ident: "cyan".into(),
-                            namespace: Some("http://ns.adobe.com/xap/1.0/g/".into()),
-                            value: XmpValue::Simple(XmpPrimitive::Real(100.0))
+                            ident: XmpIdent::new_with_one_namespace_pair(
+                                "xmpG".into(),
+                                "http://ns.adobe.com/xap/1.0/g/".into(),
+                                "type".into(),
+                            ),
+                            value: XmpValue::Simple(XmpPrimitive::Text("PROCESS".into())),
                         },
                         XmpValueStructField::Value {
-                            ident: "magenta".into(),
-                            namespace: Some("http://ns.adobe.com/xap/1.0/g/".into()),
-                            value: XmpValue::Simple(XmpPrimitive::Real(100.0))
+                            ident: XmpIdent::new_with_one_namespace_pair(
+                                "xmpG".into(),
+                                "http://ns.adobe.com/xap/1.0/g/".into(),
+                                "cyan".into(),
+                            ),
+                            value: XmpValue::Simple(XmpPrimitive::Real(100.0)),
                         },
                         XmpValueStructField::Value {
-                            ident: "yellow".into(),
-                            namespace: Some("http://ns.adobe.com/xap/1.0/g/".into()),
-                            value: XmpValue::Simple(XmpPrimitive::Real(100.0))
+                            ident: XmpIdent::new_with_one_namespace_pair(
+                                "xmpG".into(),
+                                "http://ns.adobe.com/xap/1.0/g/".into(),
+                                "magenta".into(),
+                            ),
+                            value: XmpValue::Simple(XmpPrimitive::Real(100.0)),
                         },
                         XmpValueStructField::Value {
-                            ident: "black".into(),
-                            namespace: Some("http://ns.adobe.com/xap/1.0/g/".into()),
-                            value: XmpValue::Simple(XmpPrimitive::Real(100.0))
+                            ident: XmpIdent::new_with_one_namespace_pair(
+                                "xmpG".into(),
+                                "http://ns.adobe.com/xap/1.0/g/".into(),
+                                "yellow".into(),
+                            ),
+                            value: XmpValue::Simple(XmpPrimitive::Real(100.0)),
+                        },
+                        XmpValueStructField::Value {
+                            ident: XmpIdent::new_with_one_namespace_pair(
+                                "xmpG".into(),
+                                "http://ns.adobe.com/xap/1.0/g/".into(),
+                                "black".into(),
+                            ),
+                            value: XmpValue::Simple(XmpPrimitive::Real(100.0)),
                         },
                     ],
-                    unexpected_fields: vec![]
-                }
+                    unexpected_fields: vec![],
+                },
             }
         );
     }

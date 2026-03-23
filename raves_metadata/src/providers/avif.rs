@@ -46,7 +46,7 @@ mod tests {
             primitives::{Primitive, PrimitiveTy},
             tags::{Ifd0Tag, KnownTag},
         },
-        xmp::{XmpElement, XmpPrimitive, XmpValue},
+        xmp::{XmpElement, XmpIdent, XmpPrimitive, XmpValue},
     };
 
     use crate::{MetadataProvider as _, exif::Ifd, providers::avif::Avif, util::logger};
@@ -70,10 +70,12 @@ mod tests {
         assert_eq!(
             *xmp_values.first().unwrap(),
             XmpElement {
-                namespace: "http://www.gimp.org/xmp/".into(),
-                prefix: "GIMP".into(),
-                name: "TimeStamp".into(),
-                value: XmpValue::Simple(XmpPrimitive::Text("1613247941462908".into()))
+                ident: XmpIdent::new_with_one_namespace_pair(
+                    "GIMP".into(),
+                    "http://www.gimp.org/xmp/".into(),
+                    "TimeStamp".into(),
+                ),
+                value: XmpValue::Simple(XmpPrimitive::Text("1613247941462908".into())),
             },
         );
 
@@ -130,13 +132,15 @@ mod tests {
         assert_eq!(
             *xmp_values
                 .iter()
-                .find(|v| v.name == "AuthorsPosition")
+                .find(|v| v.ident.name == "AuthorsPosition")
                 .unwrap(),
             XmpElement {
-                namespace: "http://ns.adobe.com/photoshop/1.0/".into(),
-                prefix: "photoshop".into(),
-                name: "AuthorsPosition".into(),
-                value: XmpValue::Simple(XmpPrimitive::Text("Computer Scientist".into()))
+                ident: XmpIdent::new_with_one_namespace_pair(
+                    "photoshop".into(),
+                    "http://ns.adobe.com/photoshop/1.0/".into(),
+                    "AuthorsPosition".into(),
+                ),
+                value: XmpValue::Simple(XmpPrimitive::Text("Computer Scientist".into())),
             },
         );
 

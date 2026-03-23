@@ -67,7 +67,7 @@ pub fn value_uri(element: &Element, maybe_ty: Option<&'static Kind>) -> XmpEleme
 #[cfg(test)]
 mod tests {
     use raves_metadata_types::xmp::{
-        XmpElement, XmpValue,
+        XmpElement, XmpIdent, XmpValue,
         parse_types::{XmpKind, XmpPrimitiveKind::Text},
     };
     use xmltree::Element;
@@ -93,10 +93,12 @@ mod tests {
             assert_eq!(
                 xmp_element,
                 XmpElement {
-                    namespace: "https://namespace.com/".into(),
-                    prefix: "prefix".into(),
-                    name: "element".into(),
-                    value: XmpValue::Uri("https://some_link.com".into())
+                    ident: XmpIdent::new_with_one_namespace_pair(
+                        "prefix".into(),
+                        "https://namespace.com/".into(),
+                        "element".into(),
+                    ),
+                    value: XmpValue::Uri("https://some_link.com".into()),
                 }
             );
         }
@@ -125,10 +127,12 @@ mod tests {
             assert_eq!(
                 xmp_element,
                 XmpElement {
-                    namespace: "https://namespace.com/".into(),
-                    prefix: "prefix".into(),
-                    name: "inner".into(),
-                    value: XmpValue::Uri("https://github.com/raves-project".into())
+                    ident: XmpIdent::new_with_one_namespace_pair(
+                        "prefix".into(),
+                        "https://namespace.com/".into(),
+                        "inner".into(),
+                    ),
+                    value: XmpValue::Uri("https://github.com/raves-project".into()),
                 }
             );
         }
@@ -253,10 +257,12 @@ mod tests {
             assert_eq!(
                 xmp_element,
                 XmpElement {
-                    namespace: "https://namespace.com/".into(),
-                    prefix: "prefix".into(),
-                    name: "inner".into(),
-                    value: XmpValue::Uri("https://github.com/raves-project".into())
+                    ident: XmpIdent::new_with_one_namespace_pair(
+                        "prefix".into(),
+                        "https://namespace.com/".into(),
+                        "inner".into(),
+                    ),
+                    value: XmpValue::Uri("https://github.com/raves-project".into()),
                 }
             );
         }

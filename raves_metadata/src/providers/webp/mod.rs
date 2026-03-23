@@ -208,7 +208,7 @@ mod tests {
             primitives::{Primitive, PrimitiveTy, Rational},
             tags::{Ifd0Tag, KnownTag},
         },
-        xmp::{XmpElement, XmpPrimitive, XmpValue},
+        xmp::{XmpElement, XmpIdent, XmpPrimitive, XmpValue},
     };
 
     use crate::{
@@ -346,9 +346,11 @@ mod tests {
         assert_eq!(
             xmp.document().values_ref().first().unwrap(),
             &XmpElement {
-                namespace: "https://barretts.club".into(),
-                prefix: "my_ns".into(),
-                name: "MyStruct".into(),
+                ident: XmpIdent::new_with_one_namespace_pair(
+                    "my_ns".into(),
+                    "https://barretts.club".into(),
+                    "MyStruct".into(),
+                ),
                 value: XmpValue::Struct(Vec::new()),
             }
         );
@@ -385,29 +387,37 @@ mod tests {
         assert_eq!(
             xmp.document().values_ref().to_vec(),
             vec![XmpElement {
-                namespace: "http://purl.org/dc/elements/1.1/".into(),
-                prefix: "dc".into(),
-                name: "subject".into(),
+                ident: XmpIdent::new_with_one_namespace_pair(
+                    "dc".into(),
+                    "http://purl.org/dc/elements/1.1/".into(),
+                    "subject".into(),
+                ),
                 value: XmpValue::UnorderedArray(vec![
                     XmpElement {
-                        name: "li".into(),
-                        namespace: "http://www.w3.org/1999/02/22-rdf-syntax-ns#".into(),
-                        prefix: "rdf".into(),
-                        value: XmpValue::Simple(XmpPrimitive::Text("farts".into()))
+                        ident: XmpIdent::new_with_one_namespace_pair(
+                            "rdf".into(),
+                            "http://www.w3.org/1999/02/22-rdf-syntax-ns#".into(),
+                            "li".into(),
+                        ),
+                        value: XmpValue::Simple(XmpPrimitive::Text("farts".into())),
                     },
                     XmpElement {
-                        name: "li".into(),
-                        namespace: "http://www.w3.org/1999/02/22-rdf-syntax-ns#".into(),
-                        prefix: "rdf".into(),
-                        value: XmpValue::Simple(XmpPrimitive::Text("not farts".into()))
+                        ident: XmpIdent::new_with_one_namespace_pair(
+                            "rdf".into(),
+                            "http://www.w3.org/1999/02/22-rdf-syntax-ns#".into(),
+                            "li".into(),
+                        ),
+                        value: XmpValue::Simple(XmpPrimitive::Text("not farts".into())),
                     },
                     XmpElement {
-                        name: "li".into(),
-                        namespace: "http://www.w3.org/1999/02/22-rdf-syntax-ns#".into(),
-                        prefix: "rdf".into(),
-                        value: XmpValue::Simple(XmpPrimitive::Text("etc.".into()))
+                        ident: XmpIdent::new_with_one_namespace_pair(
+                            "rdf".into(),
+                            "http://www.w3.org/1999/02/22-rdf-syntax-ns#".into(),
+                            "li".into(),
+                        ),
+                        value: XmpValue::Simple(XmpPrimitive::Text("etc.".into())),
                     },
-                ])
+                ]),
             }]
         );
     }
