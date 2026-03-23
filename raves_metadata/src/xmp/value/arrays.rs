@@ -281,14 +281,13 @@ fn value_array(
 mod tests {
     use raves_metadata_types::{
         xmp::parse_table::XMP_PARSING_MAP,
-        xmp::{XmpElement, XmpPrimitive, XmpValue, XmpValueStructField},
+        xmp::{XmpElement, XmpIdent, XmpPrimitive, XmpValue, XmpValueStructField},
     };
     use xmltree::Element;
 
     use crate::xmp::value::arrays::{
         value_alternatives, value_ordered_array, value_unordered_array,
     };
-
     /// Ensures we can parse a short array of alternatives.
     #[test]
     fn should_parse_alternatives() {
@@ -318,80 +317,94 @@ mod tests {
         assert_eq!(
             xmp_element,
             XmpElement {
-                namespace: "http://purl.org/dc/elements/1.1/".into(),
-                prefix: "dc".into(),
-                name: "title".into(),
+                ident: XmpIdent::new_with_one_namespace_pair(
+                    "dc".into(),
+                    "http://purl.org/dc/elements/1.1/".into(),
+                    "title".into(),
+                ),
                 value: XmpValue::Alternatives {
                     chosen: (
                         "x-default".into(),
                         XmpElement {
-                            namespace: "http://www.w3.org/1999/02/22-rdf-syntax-ns#".into(),
-                            prefix: "rdf".into(),
-                            name: "li".into(),
+                            ident: XmpIdent::new_with_one_namespace_pair(
+                                "rdf".into(),
+                                "http://www.w3.org/1999/02/22-rdf-syntax-ns#".into(),
+                                "li".into(),
+                            ),
                             value: XmpValue::Simple(XmpPrimitive::Text(
-                                "The Default. Uh... hi!".into()
-                            ))
+                                "The Default. Uh... hi!".into(),
+                            )),
                         }
-                        .into()
+                        .into(),
                     ),
                     list: vec![
                         (
                             "x-default".into(),
                             XmpElement {
-                                namespace: "http://www.w3.org/1999/02/22-rdf-syntax-ns#".into(),
-                                prefix: "rdf".into(),
-                                name: "li".into(),
+                                ident: XmpIdent::new_with_one_namespace_pair(
+                                    "rdf".into(),
+                                    "http://www.w3.org/1999/02/22-rdf-syntax-ns#".into(),
+                                    "li".into(),
+                                ),
                                 value: XmpValue::Simple(XmpPrimitive::Text(
-                                    "The Default. Uh... hi!".into()
-                                ))
-                            }
+                                    "The Default. Uh... hi!".into(),
+                                )),
+                            },
                         ),
                         (
                             "en-US".into(),
                             XmpElement {
-                                namespace: "http://www.w3.org/1999/02/22-rdf-syntax-ns#".into(),
-                                prefix: "rdf".into(),
-                                name: "li".into(),
+                                ident: XmpIdent::new_with_one_namespace_pair(
+                                    "rdf".into(),
+                                    "http://www.w3.org/1999/02/22-rdf-syntax-ns#".into(),
+                                    "li".into(),
+                                ),
                                 value: XmpValue::Simple(XmpPrimitive::Text(
-                                    "English (United States). Howdy!".into()
-                                ))
-                            }
+                                    "English (United States). Howdy!".into(),
+                                )),
+                            },
                         ),
                         (
                             "de".into(),
                             XmpElement {
-                                namespace: "http://www.w3.org/1999/02/22-rdf-syntax-ns#".into(),
-                                prefix: "rdf".into(),
-                                name: "li".into(),
+                                ident: XmpIdent::new_with_one_namespace_pair(
+                                    "rdf".into(),
+                                    "http://www.w3.org/1999/02/22-rdf-syntax-ns#".into(),
+                                    "li".into(),
+                                ),
                                 value: XmpValue::Simple(XmpPrimitive::Text(
-                                    "German. Guten Tag!".into()
-                                ))
-                            }
+                                    "German. Guten Tag!".into(),
+                                )),
+                            },
                         ),
                         (
                             "fr".into(),
                             XmpElement {
-                                namespace: "http://www.w3.org/1999/02/22-rdf-syntax-ns#".into(),
-                                prefix: "rdf".into(),
-                                name: "li".into(),
+                                ident: XmpIdent::new_with_one_namespace_pair(
+                                    "rdf".into(),
+                                    "http://www.w3.org/1999/02/22-rdf-syntax-ns#".into(),
+                                    "li".into(),
+                                ),
                                 value: XmpValue::Simple(XmpPrimitive::Text(
-                                    "French. Bonjour !".into()
-                                ))
-                            }
+                                    "French. Bonjour !".into(),
+                                )),
+                            },
                         ),
                         (
                             "ja".into(),
                             XmpElement {
-                                namespace: "http://www.w3.org/1999/02/22-rdf-syntax-ns#".into(),
-                                prefix: "rdf".into(),
-                                name: "li".into(),
+                                ident: XmpIdent::new_with_one_namespace_pair(
+                                    "rdf".into(),
+                                    "http://www.w3.org/1999/02/22-rdf-syntax-ns#".into(),
+                                    "li".into(),
+                                ),
                                 value: XmpValue::Simple(XmpPrimitive::Text(
-                                    "Japanese. こんにちは！".into()
-                                ))
-                            }
+                                    "Japanese. こんにちは！".into(),
+                                )),
+                            },
                         ),
-                    ]
-                }
+                    ],
+                },
             },
             "the parsed XMP element should match the expected value."
         );
@@ -438,74 +451,88 @@ mod tests {
         assert_eq!(
             xmp,
             XmpElement {
-                namespace: "http://iptc.org/std/Iptc4xmpExt/2008-02-29/".into(),
-                prefix: "Iptc4xmpExt".into(),
-                name: "rbVertices".into(),
+                ident: XmpIdent::new_with_one_namespace_pair(
+                    "Iptc4xmpExt".into(),
+                    "http://iptc.org/std/Iptc4xmpExt/2008-02-29/".into(),
+                    "rbVertices".into(),
+                ),
                 value: XmpValue::OrderedArray(vec![
                     XmpElement {
-                        namespace: "http://www.w3.org/1999/02/22-rdf-syntax-ns#".into(),
-                        prefix: "rdf".into(),
-                        name: "li".into(),
+                        ident: XmpIdent::new_with_one_namespace_pair(
+                            "rdf".into(),
+                            "http://www.w3.org/1999/02/22-rdf-syntax-ns#".into(),
+                            "li".into(),
+                        ),
                         value: XmpValue::Struct(vec![
                             XmpValueStructField::Value {
-                                ident: "rbX".into(),
-                                namespace: Some(
-                                    "http://iptc.org/std/Iptc4xmpExt/2008-02-29/".into()
+                                ident: XmpIdent::new_with_one_namespace_pair(
+                                    "Iptc4xmpExt".into(),
+                                    "http://iptc.org/std/Iptc4xmpExt/2008-02-29/".into(),
+                                    "rbX".into(),
                                 ),
-                                value: XmpValue::Simple(XmpPrimitive::Text("0.05".into()))
+                                value: XmpValue::Simple(XmpPrimitive::Text("0.05".into())),
                             },
                             XmpValueStructField::Value {
-                                ident: "rbY".into(),
-                                namespace: Some(
-                                    "http://iptc.org/std/Iptc4xmpExt/2008-02-29/".into()
+                                ident: XmpIdent::new_with_one_namespace_pair(
+                                    "Iptc4xmpExt".into(),
+                                    "http://iptc.org/std/Iptc4xmpExt/2008-02-29/".into(),
+                                    "rbY".into(),
                                 ),
-                                value: XmpValue::Simple(XmpPrimitive::Text("0.713".into()))
+                                value: XmpValue::Simple(XmpPrimitive::Text("0.713".into())),
                             },
                         ]),
                     },
                     XmpElement {
-                        namespace: "http://www.w3.org/1999/02/22-rdf-syntax-ns#".into(),
-                        prefix: "rdf".into(),
-                        name: "li".into(),
+                        ident: XmpIdent::new_with_one_namespace_pair(
+                            "rdf".into(),
+                            "http://www.w3.org/1999/02/22-rdf-syntax-ns#".into(),
+                            "li".into(),
+                        ),
                         value: XmpValue::Struct(vec![
                             XmpValueStructField::Value {
-                                ident: "rbX".into(),
-                                namespace: Some(
-                                    "http://iptc.org/std/Iptc4xmpExt/2008-02-29/".into()
+                                ident: XmpIdent::new_with_one_namespace_pair(
+                                    "Iptc4xmpExt".into(),
+                                    "http://iptc.org/std/Iptc4xmpExt/2008-02-29/".into(),
+                                    "rbX".into(),
                                 ),
-                                value: XmpValue::Simple(XmpPrimitive::Text("0.148".into()))
+                                value: XmpValue::Simple(XmpPrimitive::Text("0.148".into())),
                             },
                             XmpValueStructField::Value {
-                                ident: "rbY".into(),
-                                namespace: Some(
-                                    "http://iptc.org/std/Iptc4xmpExt/2008-02-29/".into()
+                                ident: XmpIdent::new_with_one_namespace_pair(
+                                    "Iptc4xmpExt".into(),
+                                    "http://iptc.org/std/Iptc4xmpExt/2008-02-29/".into(),
+                                    "rbY".into(),
                                 ),
-                                value: XmpValue::Simple(XmpPrimitive::Text("0.041".into()))
+                                value: XmpValue::Simple(XmpPrimitive::Text("0.041".into())),
                             },
                         ]),
                     },
                     XmpElement {
-                        namespace: "http://www.w3.org/1999/02/22-rdf-syntax-ns#".into(),
-                        prefix: "rdf".into(),
-                        name: "li".into(),
+                        ident: XmpIdent::new_with_one_namespace_pair(
+                            "rdf".into(),
+                            "http://www.w3.org/1999/02/22-rdf-syntax-ns#".into(),
+                            "li".into(),
+                        ),
                         value: XmpValue::Struct(vec![
                             XmpValueStructField::Value {
-                                ident: "rbX".into(),
-                                namespace: Some(
-                                    "http://iptc.org/std/Iptc4xmpExt/2008-02-29/".into()
+                                ident: XmpIdent::new_with_one_namespace_pair(
+                                    "Iptc4xmpExt".into(),
+                                    "http://iptc.org/std/Iptc4xmpExt/2008-02-29/".into(),
+                                    "rbX".into(),
                                 ),
-                                value: XmpValue::Simple(XmpPrimitive::Text("0.375".into()))
+                                value: XmpValue::Simple(XmpPrimitive::Text("0.375".into())),
                             },
                             XmpValueStructField::Value {
-                                ident: "rbY".into(),
-                                namespace: Some(
-                                    "http://iptc.org/std/Iptc4xmpExt/2008-02-29/".into()
+                                ident: XmpIdent::new_with_one_namespace_pair(
+                                    "Iptc4xmpExt".into(),
+                                    "http://iptc.org/std/Iptc4xmpExt/2008-02-29/".into(),
+                                    "rbY".into(),
                                 ),
-                                value: XmpValue::Simple(XmpPrimitive::Text("0.863".into()))
+                                value: XmpValue::Simple(XmpPrimitive::Text("0.863".into())),
                             },
                         ]),
-                    }
-                ])
+                    },
+                ]),
             }
         );
     }
@@ -541,23 +568,29 @@ mod tests {
         assert_eq!(
             xmp,
             XmpElement {
-                namespace: "http://iptc.org/std/Iptc4xmpCore/1.0/xmlns/".into(),
-                prefix: "Iptc4xmpCore".into(),
-                name: "Scene".into(),
+                ident: XmpIdent::new_with_one_namespace_pair(
+                    "Iptc4xmpCore".into(),
+                    "http://iptc.org/std/Iptc4xmpCore/1.0/xmlns/".into(),
+                    "Scene".into(),
+                ),
                 value: XmpValue::UnorderedArray(vec![
                     XmpElement {
-                        namespace: "http://www.w3.org/1999/02/22-rdf-syntax-ns#".into(),
-                        prefix: "rdf".into(),
-                        name: "li".into(),
-                        value: XmpValue::Simple(XmpPrimitive::Text("011221".into()))
+                        ident: XmpIdent::new_with_one_namespace_pair(
+                            "rdf".into(),
+                            "http://www.w3.org/1999/02/22-rdf-syntax-ns#".into(),
+                            "li".into(),
+                        ),
+                        value: XmpValue::Simple(XmpPrimitive::Text("011221".into())),
                     },
                     XmpElement {
-                        namespace: "http://www.w3.org/1999/02/22-rdf-syntax-ns#".into(),
-                        prefix: "rdf".into(),
-                        name: "li".into(),
-                        value: XmpValue::Simple(XmpPrimitive::Text("012221".into()))
+                        ident: XmpIdent::new_with_one_namespace_pair(
+                            "rdf".into(),
+                            "http://www.w3.org/1999/02/22-rdf-syntax-ns#".into(),
+                            "li".into(),
+                        ),
+                        value: XmpValue::Simple(XmpPrimitive::Text("012221".into())),
                     },
-                ])
+                ]),
             }
         );
     }

@@ -330,7 +330,7 @@ impl core::error::Error for MovConstructionError {}
 
 #[cfg(test)]
 mod tests {
-    use raves_metadata_types::xmp::{XmpElement, XmpPrimitive, XmpValue};
+    use raves_metadata_types::xmp::{XmpElement, XmpIdent, XmpPrimitive, XmpValue};
 
     use crate::{MetadataProvider, providers::mov::Mov, util::logger};
 
@@ -351,14 +351,16 @@ mod tests {
             xmp.document()
                 .values_ref()
                 .iter()
-                .find(|v| v.name == "creator")
+                .find(|v| v.ident.name == "creator")
                 .expect("should be a creator field")
                 .value,
             XmpValue::OrderedArray(vec![XmpElement {
-                namespace: "http://www.w3.org/1999/02/22-rdf-syntax-ns#".into(),
-                prefix: "rdf".into(),
-                name: "li".into(),
-                value: XmpValue::Simple(XmpPrimitive::Text("Phil Harvey".into()))
+                ident: XmpIdent::new_with_one_namespace_pair(
+                    "rdf".into(),
+                    "http://www.w3.org/1999/02/22-rdf-syntax-ns#".into(),
+                    "li".into(),
+                ),
+                value: XmpValue::Simple(XmpPrimitive::Text("Phil Harvey".into())),
             }])
         );
     }

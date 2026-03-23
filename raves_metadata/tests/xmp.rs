@@ -2,6 +2,7 @@ use raves_metadata::xmp::{
     Xmp,
     types::{XmpPrimitive, XmpValue, XmpValueStructField},
 };
+use raves_metadata_types::xmp::XmpIdent;
 
 /// Checks that a known struct type parses correctly.
 #[test]
@@ -35,29 +36,38 @@ fn known_struct_type() {
         panic!("not a struct! got: {maybe_struct_val:#?}");
     };
 
-    s.sort_by_key(|field| field.ident().to_string());
+    s.sort_by_key(|field| field.name().to_string());
 
     // ensure the values are correct
     assert_eq!(s, {
         let mut v = vec![
             XmpValueStructField::Value {
-                ident: "w".into(),
-                namespace: Some(r"http://ns.adobe.com/xap/1.0/sType/Dimensions#".into()),
+                ident: XmpIdent::new_with_one_namespace_pair(
+                    "stDim".into(),
+                    r"http://ns.adobe.com/xap/1.0/sType/Dimensions#".into(),
+                    "w".into(),
+                ),
                 value: XmpValue::Simple(XmpPrimitive::Real(4.0)),
             },
             XmpValueStructField::Value {
-                ident: "h".into(),
-                namespace: Some(r"http://ns.adobe.com/xap/1.0/sType/Dimensions#".into()),
+                ident: XmpIdent::new_with_one_namespace_pair(
+                    "stDim".into(),
+                    r"http://ns.adobe.com/xap/1.0/sType/Dimensions#".into(),
+                    "h".into(),
+                ),
                 value: XmpValue::Simple(XmpPrimitive::Real(3.0)),
             },
             XmpValueStructField::Value {
-                ident: "unit".into(),
-                namespace: Some(r"http://ns.adobe.com/xap/1.0/sType/Dimensions#".into()),
+                ident: XmpIdent::new_with_one_namespace_pair(
+                    "stDim".into(),
+                    r"http://ns.adobe.com/xap/1.0/sType/Dimensions#".into(),
+                    "unit".into(),
+                ),
                 value: XmpValue::Simple(XmpPrimitive::Text("inch".into())),
             },
         ];
 
-        v.sort_by_key(|field| field.ident().to_string());
+        v.sort_by_key(|field| field.name().to_string());
         v
     });
 }

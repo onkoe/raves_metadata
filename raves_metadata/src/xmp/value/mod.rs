@@ -1,5 +1,5 @@
 use raves_metadata_types::xmp::{
-    XmpElement, XmpValue,
+    XmpElement, XmpIdent, XmpValue,
     parse_types::{XmpKind as Kind, XmpPrimitiveKind as Prim},
 };
 use xmltree::Element;
@@ -199,9 +199,11 @@ impl XmpElementExt for Element {
         };
 
         Ok(XmpElement {
-            namespace: namespace.into(),
-            prefix: prefix.into(),
-            name: (&self.name).into(),
+            ident: XmpIdent::new_with_one_namespace_pair(
+                prefix.into(),
+                namespace.into(),
+                self.name.clone(),
+            ),
             value,
         })
     }

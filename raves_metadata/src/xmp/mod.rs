@@ -17,7 +17,9 @@
 
 extern crate alloc;
 
-use raves_metadata_types::xmp::{XmpElement, XmpPrimitive, XmpValue, parse_types::XmpKind as Kind};
+use raves_metadata_types::xmp::{
+    XmpElement, XmpIdent, XmpPrimitive, XmpValue, parse_types::XmpKind as Kind,
+};
 use xmltree::{AttributeName, Element};
 
 use crate::xmp::{
@@ -146,7 +148,7 @@ impl Xmp {
     ///         .document()
     ///         .values_ref()
     ///         .iter()
-    ///         .map(|v| v.name.clone())
+    ///         .map(|v| v.ident.name.clone())
     ///         .collect::<Vec<_>>(),
     ///     vec!["subject", "MyStruct"],
     /// );
@@ -363,10 +365,7 @@ fn parse_attribute((key, value): (AttributeName, String)) -> Option<XmpElement> 
         };
 
         XmpElement {
-            namespace: ns,
-            prefix,
-            name: key.local_name,
-
+            ident: XmpIdent::new_with_one_namespace_pair(prefix, ns, key.local_name),
             value,
         }
     })
@@ -416,7 +415,7 @@ fn parse_element(element: &Element) -> Option<XmpElement> {
 
 #[cfg(test)]
 mod tests {
-    use raves_metadata_types::xmp::{XmpElement, XmpPrimitive, XmpValue};
+    use raves_metadata_types::xmp::{XmpElement, XmpIdent, XmpPrimitive, XmpValue};
 
     use crate::xmp::{Xmp, XmpDocument};
 
@@ -483,10 +482,12 @@ mod tests {
         assert_eq!(
             xmp.document().0,
             vec![XmpElement {
-                namespace: "https://github.com/onkoe".into(),
-                prefix: "my_ns".into(),
-                name: "MyStruct".into(),
-                value: XmpValue::Struct(vec![])
+                ident: XmpIdent::new_with_one_namespace_pair(
+                    "my_ns".into(),
+                    "https://github.com/onkoe".into(),
+                    "MyStruct".into(),
+                ),
+                value: XmpValue::Struct(vec![]),
             }]
         );
     }
@@ -524,29 +525,37 @@ mod tests {
         assert_eq!(
             xmp.document().0,
             vec![XmpElement {
-                namespace: "http://purl.org/dc/elements/1.1/".into(),
-                prefix: "dc".into(),
-                name: "subject".into(),
+                ident: XmpIdent::new_with_one_namespace_pair(
+                    "dc".into(),
+                    "http://purl.org/dc/elements/1.1/".into(),
+                    "subject".into(),
+                ),
                 value: XmpValue::UnorderedArray(vec![
                     XmpElement {
-                        name: "li".into(),
-                        namespace: "http://www.w3.org/1999/02/22-rdf-syntax-ns#".into(),
-                        prefix: "rdf".into(),
-                        value: XmpValue::Simple(XmpPrimitive::Text("farts".into()))
+                        ident: XmpIdent::new_with_one_namespace_pair(
+                            "rdf".into(),
+                            "http://www.w3.org/1999/02/22-rdf-syntax-ns#".into(),
+                            "li".into(),
+                        ),
+                        value: XmpValue::Simple(XmpPrimitive::Text("farts".into())),
                     },
                     XmpElement {
-                        name: "li".into(),
-                        namespace: "http://www.w3.org/1999/02/22-rdf-syntax-ns#".into(),
-                        prefix: "rdf".into(),
-                        value: XmpValue::Simple(XmpPrimitive::Text("not farts".into()))
+                        ident: XmpIdent::new_with_one_namespace_pair(
+                            "rdf".into(),
+                            "http://www.w3.org/1999/02/22-rdf-syntax-ns#".into(),
+                            "li".into(),
+                        ),
+                        value: XmpValue::Simple(XmpPrimitive::Text("not farts".into())),
                     },
                     XmpElement {
-                        name: "li".into(),
-                        namespace: "http://www.w3.org/1999/02/22-rdf-syntax-ns#".into(),
-                        prefix: "rdf".into(),
-                        value: XmpValue::Simple(XmpPrimitive::Text("etc.".into()))
+                        ident: XmpIdent::new_with_one_namespace_pair(
+                            "rdf".into(),
+                            "http://www.w3.org/1999/02/22-rdf-syntax-ns#".into(),
+                            "li".into(),
+                        ),
+                        value: XmpValue::Simple(XmpPrimitive::Text("etc.".into())),
                     },
-                ])
+                ]),
             }]
         );
     }

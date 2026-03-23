@@ -1,5 +1,5 @@
 use raves_metadata_types::xmp::{
-    XmpElement, XmpPrimitive, XmpValue, XmpValueStructField,
+    XmpElement, XmpIdent, XmpPrimitive, XmpValue, XmpValueStructField,
     parse_types::{XmpKind as Kind, XmpKindStructField as Field},
 };
 use xmltree::Element;
@@ -57,6 +57,21 @@ pub fn value_struct(
         // do something else
         log::trace!("Getting field info on struct field: `{name}`");
         if let Some(field_info) = get_field_info(ns, name) {
+            let Some(prefix) = keys.prefix.clone() else {
+                log::warn!(
+                    "Known struct attribute had no prefix. Skipping field `{name}` on `{}`.",
+                    element.name
+                );
+                return None;
+            };
+            let Some(namespace) = ns.map(str::to_owned) else {
+                log::warn!(
+                    "Known struct attribute had no namespace. Skipping field `{name}` on `{}`.",
+                    element.name
+                );
+                return None;
+            };
+
             // check that it's a primitive
             let Kind::Simple(prim) = field_info.ty else {
                 log::error!(
@@ -72,8 +87,11 @@ pub fn value_struct(
                 Constructing accordingly..."
             );
             return Some(XmpValueStructField::Value {
-                ident: field_info.ident.name().into(),
-                namespace: field_info.ident.ns().map(|ns| ns.into()),
+                ident: XmpIdent::new_with_one_namespace_pair(
+                    prefix,
+                    namespace,
+                    name.to_string(),
+                ),
                 value: parse_primitive(value.into(), prim)
                     .inspect_err(|e| {
                         log::error!(
@@ -91,9 +109,23 @@ pub fn value_struct(
             "Struct field `{name}` was not in the schema! \
             Constructing text value..."
         );
+        let Some(prefix) = keys.prefix.clone() else {
+            log::warn!(
+                "Unknown struct attribute had no prefix. Skipping field `{name}` on `{}`.",
+                element.name
+            );
+            return None;
+        };
+        let Some(namespace) = ns.map(str::to_owned) else {
+            log::warn!(
+                "Unknown struct attribute had no namespace. Skipping field `{name}` on `{}`.",
+                element.name
+            );
+            return None;
+        };
+
         Some(XmpValueStructField::Value {
-            ident: name.into(),
-            namespace: (*ns).map(|n| n.into()),
+            ident: XmpIdent::new_with_one_namespace_pair(prefix, namespace, name.to_string()),
             value: XmpValue::Simple(XmpPrimitive::Text(value.into())),
         })
     });
@@ -161,42 +193,29 @@ pub fn value_struct_field(
     // if we know the field we're workin with, we can apply its schema.
     //
     // otherwise, we'll have to guess carefully...
-    let (ident, namespace, element) = match maybe_field_kind {
+    let element = match maybe_field_kind {
         // get em from the schema
-        Some(field_kind) => (
-            field_kind.ident.name().into(),
-            field_kind.ident.ns().map(|s| s.into()),
-            element
-                .value_with_schema(field_kind.ty)
-                .inspect_err(|e| log::error!("Field with known schema failed to parse! err: {e}"))
-                .ok()?,
-        ),
+        Some(field_kind) => element
+            .value_with_schema(field_kind.ty)
+            .inspect_err(|e| log::error!("Field with known schema failed to parse! err: {e}"))
+            .ok()?,
 
         // get em from the field
-        None => (
-            element.name.clone(),
-            element.namespace.clone(),
-            match element.value_generic() {
-                Ok(s) => s,
-                Err(e) => {
-                    log::trace!("Parsing value generically failed! err: {e}");
-                    return None;
-                }
-            },
-        ),
+        None => match element.value_generic() {
+            Ok(s) => s,
+            Err(e) => {
+                log::trace!("Parsing value generically failed! err: {e}");
+                return None;
+            }
+        },
     };
 
     Some(match element.value {
         XmpValue::Simple(_) => XmpValueStructField::Value {
-            ident,
-            namespace,
+            ident: element.ident,
             value: element.value,
         },
-        _ => XmpValueStructField::Element {
-            ident,
-            namespace,
-            element,
-        },
+        _ => XmpValueStructField::Element(element),
     })
 }
 
