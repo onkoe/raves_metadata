@@ -30,6 +30,7 @@ use crate::xmp::{
 pub mod error;
 mod heuristics;
 mod value;
+mod write;
 
 /// Re-exports of the XMP types from `raves_metadata_types`.
 ///
