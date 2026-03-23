@@ -3,21 +3,63 @@
 //! When parsing data out of XMP, these types, alongside the original document,
 //! are stored for user discoverability.
 
+use std::collections::BTreeMap;
+
 use ::alloc::{boxed::Box, vec::Vec};
 
 pub mod parse_table;
 pub mod parse_types;
 pub mod types;
 
+/// Stores the prefix, name, and namespaces for an XMP element.
+#[derive(Clone, Debug, PartialEq, PartialOrd, Hash)]
+pub struct XmpIdent {
+    /// The prefix of an element, such as `aaa` in `<aaa:bb />`.
+    pub prefix: String,
+
+    /// The namespace URIs per prefix at this level:
+    ///
+    /// `[(prefix, namespace_uri), (...)]`
+    ///
+    /// Layout-wise, each value is defined on any element above this one, or
+    /// this element itself, in an attribute called `xmlns:prefix`.
+    ///
+    /// For example, `aaa` might have a namespace URI of
+    /// `https://github.com/raves-project` for an XML input that looks like:
+    ///
+    /// ```xml
+    /// <some:Parent xmlns:aaa="https://github.com/raves-project" xmlns:some="http://some.com">
+    ///     <aaa:bb />
+    /// </some:Parent>
+    /// ```
+    pub namespaces: BTreeMap<String, String>,
+
+    /// The ("local") name of an element would be `bb` in `<aaa:bb />`.
+    pub name: String,
+}
+
+impl XmpIdent {
+    /// Creates a new `XmpIdent`, handling the manual creation of a `BTreeMap`
+    /// automatically.
+    pub fn new_with_one_namespace_pair(
+        prefix: String,
+        namespace_uri: String,
+        name: String,
+    ) -> Self {
+        Self {
+            name,
+            namespaces: BTreeMap::from([(prefix.clone(), namespace_uri)]),
+            prefix,
+        }
+    }
+}
+
 /// An element parsed from the XMP.
 ///
 /// Contains identifiers and a value.
 #[derive(Clone, Debug, PartialEq, PartialOrd, Hash)]
 pub struct XmpElement {
-    pub namespace: String,
-    pub prefix: String,
-    pub name: String,
-
+    pub ident: XmpIdent,
     pub value: XmpValue,
 }
 
@@ -115,25 +157,16 @@ pub enum XmpValueStructField {
     /// as opposed to one primitive value.
     ///
     /// In other words, the contained value isn't a primitive.
-    Element {
-        /// The field's name.
-        ident: String,
-
-        /// The field's namespace.
-        namespace: Option<String>,
-
-        /// The field's idents + value.
-        element: XmpElement,
-    },
+    Element(
+        /// The contained element, which allows children.
+        XmpElement,
+    ),
 
     /// Used when a contained value isn't recursive - it's just a
     /// primitive.
     Value {
-        /// The field's name.
-        ident: String,
-
-        /// The field's namespace.
-        namespace: Option<String>,
+        /// The field's identifying information.
+        ident: XmpIdent,
 
         /// The field's value.
         value: XmpValue,
@@ -142,18 +175,21 @@ pub enum XmpValueStructField {
 
 impl XmpValueStructField {
     /// Grabs a struct field's identifier.
-    pub fn ident(&self) -> &String {
+    pub fn name(&self) -> &String {
         match self {
-            XmpValueStructField::Element { ident, .. }
-            | XmpValueStructField::Value { ident, .. } => ident,
+            XmpValueStructField::Element(xmp_element) => &xmp_element.ident.name,
+            XmpValueStructField::Value { ident, value: _ } => &ident.name,
         }
     }
 
     /// Grabs a struct field's namespace.
     pub fn namespace(&self) -> Option<&String> {
         match self {
-            XmpValueStructField::Element { namespace, .. }
-            | XmpValueStructField::Value { namespace, .. } => namespace.as_ref(),
+            XmpValueStructField::Element(xmp_element) => {
+                xmp_element.ident.namespaces.get(&xmp_element.ident.prefix)
+            }
+
+            XmpValueStructField::Value { ident, value: _ } => ident.namespaces.get(&ident.prefix),
         }
     }
 }
