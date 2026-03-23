@@ -27,13 +27,7 @@ pub fn value_struct(
 
         log::trace!("A schema was given! Checking field info...");
         schema_fields.iter().find(|field| {
-            field.ident.name() == field_name
-                && if let Some(string_ns) = field_ns {
-                    log::trace!("Field namespace found! Will return based on namespace eq...");
-                    field.ident.ns() == Some(string_ns)
-                } else {
-                    field.ident.ns().is_none()
-                }
+            field.ident.field_name == field_name && *field_ns == Some(field.ident.namespace)
         })
     };
 
@@ -87,11 +81,7 @@ pub fn value_struct(
                 Constructing accordingly..."
             );
             return Some(XmpValueStructField::Value {
-                ident: XmpIdent::new_with_one_namespace_pair(
-                    prefix,
-                    namespace,
-                    name.to_string(),
-                ),
+                ident: XmpIdent::new_with_one_namespace_pair(prefix, namespace, name.to_string()),
                 value: parse_primitive(value.into(), prim)
                     .inspect_err(|e| {
                         log::error!(
@@ -221,6 +211,7 @@ pub fn value_struct_field(
 
 #[cfg(test)]
 mod tests {
+
     use crate::xmp::Xmp;
 
     /// The parser should be able to handle several different layouts of
