@@ -96,45 +96,24 @@ pub enum XmpKind {
     Uri,
 }
 
-/// Sorry for the long name, but what you need to know is that some struct
-/// fields have a namespace URI requirement, whereas others don't specify
-/// it.
+/// A set of identifiers for a field.
 ///
-/// Ex: `ResourceRef` specifies that its namespace must be
-/// `http://ns.adobe.com/xap/1.0/sType/ResourceRef#`, while `FrameCount`
-/// makes no suggestion at all.
+/// Please note that the `prefix` field is "preferred", not required!
 #[derive(Clone, Debug, PartialEq, PartialOrd)]
-pub enum XmpKindStructFieldIdent {
-    /// The field uses its parent's namespace.
-    ParentNs(&'static str),
-
-    /// The field doesn't have any namespace.
-    NoNs(&'static str),
-
-    /// This field requires a specific namespace!
-    Namespaced {
-        field_name: &'static str,
-        namespace: &'static str,
-    },
+pub struct XmpKindStructFieldIdent {
+    pub field_name: &'static str,
+    pub namespace: &'static str,
+    pub prefix: &'static str,
 }
 
 impl XmpKindStructFieldIdent {
     pub fn ns(&'static self) -> Option<&'static str> {
-        match self {
-            XmpKindStructFieldIdent::ParentNs(_) => None,
-            XmpKindStructFieldIdent::NoNs(_) => None,
-            XmpKindStructFieldIdent::Namespaced { namespace, .. } => Some(namespace),
-        }
+        let CHANGE_THIS_TO_RETURN_STR_DIRECTLY = ();
+        Some(self.namespace)
     }
 
     pub fn name(&'static self) -> &'static str {
-        match self {
-            XmpKindStructFieldIdent::ParentNs(name)
-            | XmpKindStructFieldIdent::NoNs(name)
-            | XmpKindStructFieldIdent::Namespaced {
-                field_name: name, ..
-            } => name,
-        }
+        self.field_name
     }
 }
 
