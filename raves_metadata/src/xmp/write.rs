@@ -8,6 +8,60 @@ use xmltree::{AttributeName, Element, Namespace, XMLNode};
 use crate::xmp::{RDF_NAMESPACE, X_NAMESPACE, Xmp, error::XmpWriteError};
 
 impl Xmp {
+    /// Writes XMP metadata out as XML.
+    ///
+    /// The given `W`, a `std::io::Write` implementor, acts as a buffer to
+    /// store the resulting XML. This buffer would usually be a file, but you
+    /// may use any type you'd like!
+    ///
+    /// ```
+    /// use raves_metadata::xmp::{
+    ///     types::{XmpElement, XmpPrimitive, XmpValue},
+    ///     Xmp,
+    /// };
+    ///
+    /// // input some XMP XML.
+    /// //
+    /// // you can get this from a provider, instead, like JPEG or MP4!
+    /// let input_xml: &str = r#"<?xml version="1.0" encoding="UTF-8"?>
+    /// <x:xmpmeta xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:x="adobe:ns:meta/">
+    ///     <rdf:RDF>
+    ///         <rdf:Description rdf:about="">
+    ///             <dc:subject xmlns:dc="http://purl.org/dc/elements/1.1/">
+    ///                 <rdf:Bag>
+    ///                     <rdf:li>`raves_metadata`</rdf:li>
+    ///                 </rdf:Bag>
+    ///             </dc:subject>
+    ///         </rdf:Description>
+    ///     </rdf:RDF>
+    /// </x:xmpmeta>"#;
+    ///
+    /// // parse the XMP
+    /// let xmp: Xmp = Xmp::new(input_xml).expect("the given XMP should parse correctly");
+    /// let element: &XmpElement = xmp
+    ///     .document()
+    ///     .values_ref()
+    ///     .first()
+    ///     .expect("there should be a value in here");
+    ///
+    /// // should be equal to: ["`raves_metadata`"]
+    /// let XmpValue::UnorderedArray(ref v) = element.value else {
+    ///     panic!("Error: not an unordered array!");
+    /// };
+    /// assert_eq!(
+    ///     v.first().unwrap().value,
+    ///     XmpValue::Simple(XmpPrimitive::Text("`raves_metadata`".into()))
+    /// );
+    ///
+    /// // now, write the XMP back to XML
+    /// let mut output_xml_bytes: Vec<u8> = Vec::new();
+    /// xmp.write(&mut output_xml_bytes)
+    ///     .expect("XMP should write properly");
+    /// let output_xml: String = String::from_utf8(output_xml_bytes).expect("it's UTF-8");
+    ///
+    /// // the output should perfectly equal the input
+    /// assert_eq!(output_xml, input_xml);
+    /// ```
     pub fn write<W: std::io::Write>(&self, w: &mut W) -> Result<(), XmpWriteError> {
         // convert the XMP data to an XML document
         log::trace!("Converting XMP to XML...");
