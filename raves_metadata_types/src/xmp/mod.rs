@@ -99,16 +99,10 @@ pub enum XmpValue {
     UnorderedArray(Vec<XmpElement>),
     OrderedArray(Vec<XmpElement>),
     Alternatives {
-        /// In `(default_key, default_value)` form.
-        ///
-        /// This is the "chosen" (default) value in the list of
-        /// alternatives.
-        chosen: (String, Box<XmpElement>),
-
         /// This is the full list of alternatives.
         ///
-        /// Each entry is a `(key, value)` pair.
-        list: Vec<(String, XmpElement)>,
+        /// Each entry is a `(lang, associated_text)` key-value pair.
+        list: BTreeMap<String, XmpValueAlternative>,
     },
 
     /// This variant codes specifically for URIs.
@@ -141,10 +135,7 @@ impl core::hash::Hash for XmpValue {
             XmpValue::UnorderedArray(xmp_elements) | XmpValue::OrderedArray(xmp_elements) => {
                 xmp_elements.hash(state)
             }
-            XmpValue::Alternatives { chosen, list } => {
-                chosen.hash(state);
-                list.hash(state);
-            }
+            XmpValue::Alternatives { list } => list.hash(state),
             XmpValue::Uri(string) => string.hash(state),
         }
     }
@@ -192,6 +183,18 @@ impl XmpValueStructField {
             XmpValueStructField::Value { ident, value: _ } => ident.namespaces.get(&ident.prefix),
         }
     }
+}
+
+/// An XMP alternative value must be a `XmpElement::Simple(XmpValue::Text(t))`,
+/// which isn't easy to enforce without a separate type.
+///
+/// So, this type exists to enforce that requirement at compile time.
+///
+/// For more information, please see: ISO 16684-1:2012, section 8.2.2
+#[derive(Clone, Debug, PartialEq, PartialOrd, Hash)]
+pub struct XmpValueAlternative {
+    /// The stored text inside the alternative.
+    pub text: String,
 }
 
 /// XMP structures can use these primitive types.

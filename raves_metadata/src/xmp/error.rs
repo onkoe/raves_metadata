@@ -3,7 +3,7 @@
 use std::num::{ParseFloatError, ParseIntError};
 
 use raves_metadata_types::xmp::{
-    XmpElement, XmpValue,
+    XmpElement, XmpValue, XmpValueAlternative,
     parse_types::{XmpKind, XmpKindStructField},
 };
 
@@ -249,7 +249,7 @@ pub enum XmpParsingError {
         /// The list of alternatives.
         ///
         /// One of these should have a default value, but none did!
-        alternatives_array: Vec<(String, XmpElement)>,
+        alternatives_array: Vec<(String, XmpValueAlternative)>,
     },
 
     /// The list (un/ordered array) parser was given a schema for, e.g., a
