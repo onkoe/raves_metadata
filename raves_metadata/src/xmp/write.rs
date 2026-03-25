@@ -5,29 +5,10 @@ use raves_metadata_types::xmp::{
 };
 use xmltree::{AttributeName, Element, Namespace, XMLNode};
 
-use crate::xmp::{RDF_NAMESPACE, X_NAMESPACE, Xmp};
-
-#[derive(Debug)]
-pub enum todo_write_error_move_me {
-    /// The underlying XML writer failed to write the document.
-    ///
-    /// This could be due to a number of reasons, though it's likely due to the
-    /// destination referred to by `Write` being unavailable.
-    ///
-    /// Please see the contained error's `Display` output for more info.
-    XmlWriteError(xmltree::Error),
-
-    /// The depth limit has been reached.
-    ///
-    /// In other words, there were, recursively, too many fields.
-    DepthLimitReached(u8),
-}
-
-pub struct todo_impl_display_for_err;
-pub struct todo_impl_error_for_err;
+use crate::xmp::{RDF_NAMESPACE, X_NAMESPACE, Xmp, error::XmpWriteError};
 
 impl Xmp {
-    pub fn write<W: std::io::Write>(&self, w: &mut W) -> Result<(), todo_write_error_move_me> {
+    pub fn write<W: std::io::Write>(&self, w: &mut W) -> Result<(), XmpWriteError> {
         // convert the XMP data to an XML document
         log::trace!("Converting XMP to XML...");
         let root: Element = xmp_data_to_xml_document(self)?;
@@ -35,22 +16,36 @@ impl Xmp {
 
         // write root using `Write` trait
         log::trace!("Writing XML document to sink...");
-        root.write_with_config(
-            w,
-            xmltree::EmitterConfig {
-                indent_string: std::borrow::Cow::from("    "),
-                perform_indent: true,
-                ..Default::default()
-            },
-        )
-        .inspect_err(|e| log::error!("Failed to write XMP as XML due to error: {e}"))
-        .map_err(todo_write_error_move_me::XmlWriteError)
-        .inspect(|_| log::trace!("XML document was successfully written to sink!"))
+        let result = root
+            .write_with_config(
+                w,
+                xmltree::EmitterConfig {
+                    indent_string: std::borrow::Cow::from("    "),
+                    perform_indent: true,
+                    ..Default::default()
+                },
+            )
+            .inspect_err(|e| log::error!("Failed to write XMP as XML due to error: {e}"))
+            .inspect(|_| log::trace!("XML document was successfully written to sink!"));
+
+        // convert any error to our crate's error (via string conversion).
+        //
+        // otherwise, return `Ok`!
+        match result {
+            // NOTE: these are strings to let the error type impl `Clone`/etc.
+            Err(xmltree::Error::Io(io)) => Err(XmpWriteError::Io(io.to_string())),
+            Err(other) => {
+                // TODO: is this even possible? we maintain the XML model lol
+                Err(XmpWriteError::XmlWrite(other.to_string()))
+            }
+
+            Ok(()) => Ok(()),
+        }
     }
 }
 
 /// Creates an XML document from the inner XMP data.
-fn xmp_data_to_xml_document(xmp: &Xmp) -> Result<Element, todo_write_error_move_me> {
+fn xmp_data_to_xml_document(xmp: &Xmp) -> Result<Element, XmpWriteError> {
     // XMP's flavor of XML has the following layout:
     //
     // - x:xmpmeta
@@ -97,7 +92,7 @@ fn xmp_data_to_xml_document(xmp: &Xmp) -> Result<Element, todo_write_error_move_
 
     for value in sorted_values {
         // convert it to an XML element
-        let xml_element: Element = convert_xmp_element_to_xml_element(&value, 0)?;
+        let xml_element: Element = convert_xmp_element_to_xml_element(&value)?;
 
         // then, append the XML element to the `rdf:Description`
         description.children.push(XMLNode::Element(xml_element));
@@ -112,14 +107,7 @@ fn xmp_data_to_xml_document(xmp: &Xmp) -> Result<Element, todo_write_error_move_
 
 fn convert_xmp_element_to_xml_element(
     xmp_src_element: &XmpElement,
-    depth: u8,
-) -> Result<Element, todo_write_error_move_me> {
-    // ensure we're not past the depth limit (for recursive calls)
-    if depth == u8::MAX {
-        log::error!("XML depth limit reached! Cannot continue writing...");
-        return Err(todo_write_error_move_me::DepthLimitReached(u8::MAX));
-    }
-
+) -> Result<Element, XmpWriteError> {
     // create a new XML element
     let mut xml_dest_element = Element::new(xmp_src_element.ident.name.as_str());
 
@@ -166,7 +154,7 @@ fn convert_xmp_element_to_xml_element(
 
             // add each field onto the struct
             for field in fields {
-                add_struct_field_to_element(&mut description, &field, depth)?;
+                add_struct_field_to_element(&mut description, &field)?;
             }
 
             // push the `rdf:Description` onto the parent
@@ -192,11 +180,11 @@ fn convert_xmp_element_to_xml_element(
             let mut description: Element = create_rdf_description_element();
 
             // add discriminant
-            add_struct_field_to_element(&mut description, &discriminant.clone(), depth)?;
+            add_struct_field_to_element(&mut description, &discriminant.clone())?;
 
             // add expected fields
             for field in expected_fields {
-                add_struct_field_to_element(&mut description, &field, depth)?;
+                add_struct_field_to_element(&mut description, &field)?;
             }
 
             // finally, add unexpected fields
@@ -206,7 +194,7 @@ fn convert_xmp_element_to_xml_element(
                     field.namespace(),
                     field.name()
                 );
-                add_struct_field_to_element(&mut description, &field, depth)?;
+                add_struct_field_to_element(&mut description, &field)?;
             }
 
             // push the `rdf:Description` onto the parent
@@ -236,7 +224,7 @@ fn convert_xmp_element_to_xml_element(
 
             // push each list value onto the `rdf:Bag`
             for element in xmp_elements {
-                add_array_entry_to_element(&mut bag, &element.value, None, depth)?;
+                add_array_entry_to_element(&mut bag, &element.value, None)?;
             }
 
             // push the `rdf:Bag` onto the parent
@@ -259,7 +247,7 @@ fn convert_xmp_element_to_xml_element(
 
             // push each list value onto the `rdf:Seq`
             for element in xmp_elements {
-                add_array_entry_to_element(&mut seq, &element.value, None, depth)?;
+                add_array_entry_to_element(&mut seq, &element.value, None)?;
             }
 
             // push the `rdf:Seq` onto the parent
@@ -287,7 +275,6 @@ fn convert_xmp_element_to_xml_element(
                     &mut alt,
                     &XmpValue::Simple(XmpPrimitive::Text(alternative.text.clone())),
                     Some(alternative_lang),
-                    depth,
                 )?;
             }
 
@@ -340,8 +327,7 @@ fn create_rdf_description_element() -> Element {
 fn add_struct_field_to_element(
     description: &mut Element,
     field: &XmpValueStructField,
-    depth: u8,
-) -> Result<(), todo_write_error_move_me> {
+) -> Result<(), XmpWriteError> {
     description
         .children
         .push(XMLNode::Element(convert_xmp_element_to_xml_element(
@@ -353,7 +339,6 @@ fn add_struct_field_to_element(
                     value: value.clone(),
                 },
             },
-            depth + 1,
         )?));
 
     Ok(())
@@ -368,8 +353,7 @@ fn add_array_entry_to_element(
     parent: &mut Element,
     value: &XmpValue,
     lang_qualifier: Option<&str>,
-    depth: u8,
-) -> Result<(), todo_write_error_move_me> {
+) -> Result<(), XmpWriteError> {
     // make a `xml:lang` qualifier for `rdf:li`, if needed
     let attributes: HashMap<xmltree::AttributeName, String> =
         if let Some(qualifier) = lang_qualifier {
@@ -386,17 +370,14 @@ fn add_array_entry_to_element(
         };
 
     // create a `rdf:li` item that **is** the content
-    let mut li: Element = convert_xmp_element_to_xml_element(
-        &XmpElement {
-            ident: XmpIdent::new_with_one_namespace_pair(
-                "rdf".into(),
-                RDF_NAMESPACE.into(),
-                "li".into(),
-            ),
-            value: value.clone(),
-        },
-        depth + 1,
-    )?;
+    let mut li: Element = convert_xmp_element_to_xml_element(&XmpElement {
+        ident: XmpIdent::new_with_one_namespace_pair(
+            "rdf".into(),
+            RDF_NAMESPACE.into(),
+            "li".into(),
+        ),
+        value: value.clone(),
+    })?;
     li.attributes = attributes;
 
     parent.children.push(XMLNode::Element(li));
@@ -454,9 +435,9 @@ fn sort_xmp_struct_field_list(list: &mut [XmpValueStructField]) {
 
 #[cfg(test)]
 mod tests {
-    use pretty_assertions::assert_str_eq;
+    use pretty_assertions::{assert_eq, assert_str_eq};
 
-    use crate::xmp::Xmp;
+    use crate::xmp::{Xmp, error::XmpWriteError};
 
     #[test]
     fn write_round_trip() {
@@ -487,6 +468,31 @@ mod tests {
                 "Round trip for test file at: `{expected_output_path}` failed! (LEFT: expected, RIGHT: got)"
             );
         }
+    }
+
+    #[test]
+    fn write_to_full_buffer_should_fail() {
+        helpers::init_logging();
+
+        // define a limited-size buf
+        let mut buffer: [u8; 32] = [0_u8; 32];
+
+        // grab input XML
+        let input_path = r#"assets/metadata_specs/xmp/1.in.xml"#;
+        let input_xml: String = std::fs::read_to_string(input_path).expect("get input XML");
+
+        // parse as XMP
+        let xmp: Xmp = Xmp::new(&input_xml).expect("XMP should parse properly");
+
+        // write that XMP back to a string of XML
+        let error: XmpWriteError = xmp
+            .write(&mut buffer.as_mut_slice())
+            .expect_err("buffer is full, so write should fail");
+
+        assert_eq!(
+            error,
+            XmpWriteError::Io("failed to write whole buffer".into())
+        );
     }
 
     mod helpers {

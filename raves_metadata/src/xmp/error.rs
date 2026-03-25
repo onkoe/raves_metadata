@@ -17,6 +17,9 @@ pub type XmpValueResult = Result<XmpValue, XmpParsingError>;
 /// This may or may not contain an error.
 pub type XmpElementResult = Result<XmpElement, XmpParsingError>;
 
+/// A result obtained when serializing an XMP document.
+pub type XmpWriteResult<T> = Result<T, XmpWriteError>;
+
 use std::sync::Arc;
 
 /// This is an error that happened while we were parsing XMP.
@@ -131,6 +134,40 @@ impl core::error::Error for XmpError {
 impl From<xmltree::ParseError> for XmpError {
     fn from(value: xmltree::ParseError) -> Self {
         XmpError::XmlParseError(value.into())
+    }
+}
+
+/// An error that occurred when writing XMP as XML.
+#[derive(Clone, Debug, PartialEq, PartialOrd, Hash)]
+#[non_exhaustive]
+pub enum XmpWriteError {
+    /// The provided writer (`W`) returned an I/O error.
+    Io(String),
+
+    /// The underlying XML writer failed to write the document.
+    ///
+    /// This could be due to a number of reasons, though it's likely due to the
+    /// destination referred to by `Write` being unavailable.
+    ///
+    /// Please see the contained error's `Display` output for more info.
+    /// (that's the string)
+    XmlWrite(String),
+}
+
+impl core::fmt::Display for XmpWriteError {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        match self {
+            Self::Io(err) => write!(f, "Encountered I/O error while writing XML. err: {err}"),
+            Self::XmlWrite(err) => {
+                write!(f, "The XML writer failed to write. err: {err}")
+            }
+        }
+    }
+}
+
+impl core::error::Error for XmpWriteError {
+    fn source(&self) -> Option<&(dyn core::error::Error + 'static)> {
+        None
     }
 }
 
