@@ -451,3 +451,51 @@ fn sort_xmp_struct_field_list(list: &mut [XmpValueStructField]) {
             })
     });
 }
+
+#[cfg(test)]
+mod tests {
+    use pretty_assertions::assert_str_eq;
+
+    use crate::xmp::Xmp;
+
+    #[test]
+    fn write_round_trip() {
+        helpers::init_logging();
+
+        for i in 1..=2 {
+            // read the input from disk
+            let input_path: String = format!("assets/metadata_specs/xmp/{i}.in.xml");
+            let input_xml: String = std::fs::read_to_string(&input_path).expect("get input XML");
+
+            // parse as XMP
+            let xmp: Xmp = Xmp::new(&input_xml).expect("XMP should parse properly");
+
+            // write that XMP back to a string of XML
+            let mut output: Vec<u8> = Vec::new();
+            xmp.write(&mut output).expect("XMP should write");
+            let output_xml: &str = core::str::from_utf8(&output).expect("Output should be UTF-8");
+
+            // grab expected output
+            let expected_output_path: String = format!("assets/metadata_specs/xmp/{i}.out.xml");
+            let expected_output_xml: String =
+                std::fs::read_to_string(&expected_output_path).expect("get expected output XML");
+
+            // make sure the output is as expected
+            assert_str_eq!(
+                expected_output_xml,
+                output_xml,
+                "Round trip for test file at: `{expected_output_path}` failed! (LEFT: expected, RIGHT: got)"
+            );
+        }
+    }
+
+    mod helpers {
+        pub fn init_logging() {
+            _ = env_logger::builder()
+                .filter_level(log::LevelFilter::max())
+                .format_file(true)
+                .format_line_number(true)
+                .try_init();
+        }
+    }
+}
