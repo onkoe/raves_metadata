@@ -113,6 +113,11 @@ impl Xmp {
         &self.document
     }
 
+    /// Returns the underlying XML document in a mutable way.
+    pub fn document_mut(&mut self) -> &mut XmpDocument {
+        &mut self.document
+    }
+
     /// Combines this XMP document with another one.
     ///
     /// Required to implement things like Extended XMP in JPEG.
