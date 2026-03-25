@@ -1,13 +1,10 @@
-use raves_metadata_types::xmp::{
-    XmpValue,
-    parse_types::{XmpKind as Kind, XmpPrimitiveKind as Prim},
-};
-use xmltree::{Element, XMLNode};
+use raves_metadata_types::xmp::{XmpValue, XmpValueAlternative, parse_types::XmpKind as Kind};
+use xmltree::{AttributeName, Element, XMLNode};
 
 use crate::xmp::{
     RDF_NAMESPACE,
     error::{XmpElementResult, XmpParsingError},
-    value::{XmpElementExt, prims::parse_primitive},
+    value::XmpElementExt,
 };
 
 /// Parses an element's value as a list of alternatives.
@@ -72,14 +69,14 @@ pub fn value_alternatives(
             ns.as_str() == RDF_NAMESPACE && maybe_li.name.as_str() == "li"
         });
 
-    // parse each `rdf:li` into a (tag, `XmpValue`) pair
-    let parsed_lis: Vec<_> = lis
+    // parse each `rdf:li` into a (tag, `XmpValueAlternative`) pair
+    let parsed_lis: Vec<((&AttributeName, &String), String)> = lis
         .flat_map(|li| {
             // we need to know which case we're workin with.
             //
             // each li should have a case tag
             let maybe_tag_primitive = li.attributes.iter().find(|(keys, _)| {
-                // check prefix (TODO: does `xml` have a namespace URI?)
+                // only include attrs with the `xml` prefix
                 if keys
                     .prefix
                     .as_ref()
@@ -95,13 +92,13 @@ pub fn value_alternatives(
                     return false;
                 }
 
-                // check element
+                // only include attributes with the name `lang`
                 if keys.local_name.as_str() != "lang" {
                     log::trace!(
-                        "`rdf:li` attr isn't a case tag - missing `xml` namespace prefix. \
-                        got: `{prefix:?}`, \
-                        expected: `Some(\"xml\")`",
-                        prefix = keys.prefix
+                        "`rdf:li` attr isn't a case tag - missing `lang` local name. \
+                        got: `{}`, \
+                        expected: `\"lang\"`",
+                        keys.local_name
                     );
                     return false;
                 }
@@ -109,47 +106,24 @@ pub fn value_alternatives(
                 true
             });
 
+            // if we found the `rdf:lang="<SOMETHING>" attribute, we'll keep
+            // this alternative :)
             if let Some(tag_primitive) = maybe_tag_primitive {
-                return Some((
-                    tag_primitive,
-                    li.to_xmp_element(
-                        parse_primitive(li.get_text()?.to_string(), &Prim::Text)
-                            .inspect_err(|e| log::error!("Couldn't parse primitive! err: {e}"))
-                            .ok()?,
-                    )
-                    .inspect_err(|e| log::error!("Failed to create `XmpElement`. err: {e}"))
-                    .ok()?,
-                ));
+                return Some((tag_primitive, li.get_text()?.to_string()));
             }
 
+            // otherwise, we won't.
             None
         })
         .collect();
 
-    // find the default one based on the marker
-    let Some(((_chosen_tag_idents, chosen_tag_value), chosen_value)) = parsed_lis
-        .iter()
-        .find(|((_tag_idents, tag_value), _)| tag_value.as_str() == "x-default")
-        .cloned()
-    else {
-        log::error!("Can't create list of alternatives - no default was found.");
-        log::error!("The options found were: {parsed_lis:#?}");
-        return Err(XmpParsingError::ArrayAltNoDefault {
-            element_name: element.name.clone(),
-            alternatives_array: Vec::from_iter(parsed_lis.iter().map(
-                |((_tag_idents, tag_value), parsed_li_elem)| {
-                    ((*tag_value).clone(), parsed_li_elem.clone())
-                },
-            )),
-        });
-    };
-
     // wrap it all up
     let value = XmpValue::Alternatives {
-        chosen: (chosen_tag_value.into(), Box::new(chosen_value)),
         list: parsed_lis
             .into_iter()
-            .map(|((_tag_idents, tag_value), value)| (tag_value.clone(), value))
+            .map(|((_tag_idents, lang), text)| {
+                (lang.clone(), XmpValueAlternative { text: text.clone() })
+            })
             .collect(),
     };
 
@@ -279,9 +253,11 @@ fn value_array(
 
 #[cfg(test)]
 mod tests {
-    use raves_metadata_types::{
-        xmp::parse_table::XMP_PARSING_MAP,
-        xmp::{XmpElement, XmpIdent, XmpPrimitive, XmpValue, XmpValueStructField},
+    use std::collections::BTreeMap;
+
+    use raves_metadata_types::xmp::{
+        XmpElement, XmpIdent, XmpPrimitive, XmpValue, XmpValueAlternative, XmpValueStructField,
+        parse_table::XMP_PARSING_MAP,
     };
     use xmltree::Element;
 
@@ -323,87 +299,38 @@ mod tests {
                     "title".into(),
                 ),
                 value: XmpValue::Alternatives {
-                    chosen: (
-                        "x-default".into(),
-                        XmpElement {
-                            ident: XmpIdent::new_with_one_namespace_pair(
-                                "rdf".into(),
-                                "http://www.w3.org/1999/02/22-rdf-syntax-ns#".into(),
-                                "li".into(),
-                            ),
-                            value: XmpValue::Simple(XmpPrimitive::Text(
-                                "The Default. Uh... hi!".into(),
-                            )),
-                        }
-                        .into(),
-                    ),
-                    list: vec![
+                    list: BTreeMap::from([
                         (
                             "x-default".into(),
-                            XmpElement {
-                                ident: XmpIdent::new_with_one_namespace_pair(
-                                    "rdf".into(),
-                                    "http://www.w3.org/1999/02/22-rdf-syntax-ns#".into(),
-                                    "li".into(),
-                                ),
-                                value: XmpValue::Simple(XmpPrimitive::Text(
-                                    "The Default. Uh... hi!".into(),
-                                )),
-                            },
+                            XmpValueAlternative {
+                                text: "The Default. Uh... hi!".into()
+                            }
                         ),
                         (
                             "en-US".into(),
-                            XmpElement {
-                                ident: XmpIdent::new_with_one_namespace_pair(
-                                    "rdf".into(),
-                                    "http://www.w3.org/1999/02/22-rdf-syntax-ns#".into(),
-                                    "li".into(),
-                                ),
-                                value: XmpValue::Simple(XmpPrimitive::Text(
-                                    "English (United States). Howdy!".into(),
-                                )),
-                            },
+                            XmpValueAlternative {
+                                text: "English (United States). Howdy!".into()
+                            }
                         ),
                         (
                             "de".into(),
-                            XmpElement {
-                                ident: XmpIdent::new_with_one_namespace_pair(
-                                    "rdf".into(),
-                                    "http://www.w3.org/1999/02/22-rdf-syntax-ns#".into(),
-                                    "li".into(),
-                                ),
-                                value: XmpValue::Simple(XmpPrimitive::Text(
-                                    "German. Guten Tag!".into(),
-                                )),
-                            },
+                            XmpValueAlternative {
+                                text: "German. Guten Tag!".into()
+                            }
                         ),
                         (
                             "fr".into(),
-                            XmpElement {
-                                ident: XmpIdent::new_with_one_namespace_pair(
-                                    "rdf".into(),
-                                    "http://www.w3.org/1999/02/22-rdf-syntax-ns#".into(),
-                                    "li".into(),
-                                ),
-                                value: XmpValue::Simple(XmpPrimitive::Text(
-                                    "French. Bonjour !".into(),
-                                )),
-                            },
+                            XmpValueAlternative {
+                                text: "French. Bonjour !".into()
+                            }
                         ),
                         (
                             "ja".into(),
-                            XmpElement {
-                                ident: XmpIdent::new_with_one_namespace_pair(
-                                    "rdf".into(),
-                                    "http://www.w3.org/1999/02/22-rdf-syntax-ns#".into(),
-                                    "li".into(),
-                                ),
-                                value: XmpValue::Simple(XmpPrimitive::Text(
-                                    "Japanese. こんにちは！".into(),
-                                )),
-                            },
+                            XmpValueAlternative {
+                                text: "Japanese. こんにちは！".into()
+                            }
                         ),
-                    ],
+                    ]),
                 },
             },
             "the parsed XMP element should match the expected value."
