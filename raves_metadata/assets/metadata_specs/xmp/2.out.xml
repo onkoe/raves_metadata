@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<x:xmpmeta xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:x="adobe:ns:meta/">
+    <rdf:RDF>
+        <rdf:Description rdf:about="">
+            <crs:HasCrop xmlns:crs="http://ns.adobe.com/camera-raw-settings/1.0/">False</crs:HasCrop>
+            <exif:DateTimeDigitized xmlns:exif="http://ns.adobe.com/exif/1.0/">2026:01:01 01:02:03</exif:DateTimeDigitized>
+            <photoshop:Urgency xmlns:photoshop="http://ns.adobe.com/photoshop/1.0/">5</photoshop:Urgency>
+            <tiff:Copyright xmlns:tiff="http://ns.adobe.com/tiff/1.0/">
+                <rdf:Alt>
+                    <rdf:li xml:lang="en-us">SECOND</rdf:li>
+                    <rdf:li xml:lang="fr">THIRD</rdf:li>
+                    <rdf:li xml:lang="x-default">FIRST</rdf:li>
+                </rdf:Alt>
+            </tiff:Copyright>
+            <xmp:Identifier xmlns:xmp="http://ns.adobe.com/xap/1.0/">
+                <rdf:Bag>
+                    <rdf:li>Alice</rdf:li>
+                    <rdf:li>Bob</rdf:li>
+                    <rdf:li>Carol</rdf:li>
+                </rdf:Bag>
+            </xmp:Identifier>
+            <xmp:Label xmlns:xmp="http://ns.adobe.com/xap/1.0/">Cool</xmp:Label>
+            <xmp:Rating xmlns:xmp="http://ns.adobe.com/xap/1.0/">2</xmp:Rating>
+            <xmpDM:videoAlphaPremultipleColor xmlns:xmpDM="http://ns.adobe.com/xmp/1.0/DynamicMedia/">
+                <rdf:Description>
+                    <xmpTPg:mode xmlns:xmpTPg="http://ns.adobe.com/xap/1.0/g/">RGB</xmpTPg:mode>
+                    <xmpTPg:blue xmlns:xmpTPg="http://ns.adobe.com/xap/1.0/g/">255</xmpTPg:blue>
+                    <xmpTPg:green xmlns:xmpTPg="http://ns.adobe.com/xap/1.0/g/">255</xmpTPg:green>
+                    <xmpTPg:mode xmlns:xmpTPg="http://ns.adobe.com/xap/1.0/g/">RGB</xmpTPg:mode>
+                    <xmpTPg:red xmlns:xmpTPg="http://ns.adobe.com/xap/1.0/g/">255</xmpTPg:red>
+                    <xmpTPg:swatchName xmlns:xmpTPg="http://ns.adobe.com/xap/1.0/g/">premultiply white</xmpTPg:swatchName>
+                    <xmpTPg:type xmlns:xmpTPg="http://ns.adobe.com/xap/1.0/g/">PROCESS</xmpTPg:type>
+                    <xmpTPg:unexpectedField xmlns:xmpTPg="http://ns.adobe.com/xap/1.0/g/">Hello world</xmpTPg:unexpectedField>
+                </rdf:Description>
+            </xmpDM:videoAlphaPremultipleColor>
+            <xmpDM:videoFrameSize xmlns:xmpDM="http://ns.adobe.com/xmp/1.0/DynamicMedia/">
+                <rdf:Description>
+                    <stDim:h xmlns:stDim="http://ns.adobe.com/xap/1.0/sType/Dimensions#">1080</stDim:h>
+                    <stDim:unit xmlns:stDim="http://ns.adobe.com/xap/1.0/sType/Dimensions#">pixel</stDim:unit>
+                    <stDim:w xmlns:stDim="http://ns.adobe.com/xap/1.0/sType/Dimensions#">1920</stDim:w>
+                </rdf:Description>
+            </xmpDM:videoFrameSize>
+            <xmpMM:ManageTo xmlns:xmpMM="http://ns.adobe.com/xap/1.0/mm/" rdf:resource="https://github.com/raves-project/" />
+            <xmpTPg:PlateNames xmlns:xmpTPg="http://ns.adobe.com/xap/1.0/g/">
+                <rdf:Seq>
+                    <rdf:li>FIRST</rdf:li>
+                    <rdf:li>SECOND</rdf:li>
+                    <rdf:li>THIRD</rdf:li>
+                </rdf:Seq>
+            </xmpTPg:PlateNames>
+        </rdf:Description>
+    </rdf:RDF>
+</x:xmpmeta>

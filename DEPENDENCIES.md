@@ -44,6 +44,15 @@ It only depends on:
 - `env_filter`: provides environment parsing.
   - We don't actually need this, but you can't turn it off, so it's fine...
 
+#### `pretty_assertions`
+
+Provides colorful, diff-like `assert!` and `assert_eq!` macros for tests.
+
+It depends on two other crates:
+
+- `diff`: Tiny library to generate, unsurprisingly, `diff` outputs.
+- `yansi`: Provides terminal styles, cross-platform support, and a high-quality API for consistent output.
+
 ## `raves_metadata_types`
 
 I'm more lenient for dependencies in here. Please make an issue before doing so, nonetheless! :D
