@@ -5,7 +5,9 @@ use raves_metadata_types::xmp::{
 use xmltree::Element;
 
 use crate::xmp::{
+    RDF_NAMESPACE,
     error::{XmpElementResult, XmpParsingError},
+    heuristics::XmpElementHeuristicsExt as _,
     value::{XmpElementExt, structs::value_struct_field},
 };
 
@@ -45,6 +47,31 @@ pub fn value_union(
         });
     };
 
+    // see if we have an `rdf:Description` field container or not
+    let field_parent: &Element = if element.attributes.iter().any(|attr| {
+        attr.0
+            .namespace
+            .as_ref()
+            .is_some_and(|ns: &String| *ns == RDF_NAMESPACE)
+            && attr.0.local_name == "parseType"
+            && attr.1 == "Resource"
+    }) {
+        element
+    } else if let Some(s) = element
+        .get_child("Description")
+        .filter(|desc_elem| desc_elem.is_rdf_description())
+    {
+        s
+    } else {
+        log::error!(
+            "Supposed union didn't seem to have any fields. \
+            Returning a discriminant error."
+        );
+        return Err(XmpParsingError::UnionNoDiscriminant {
+            element_name: element.name.clone(),
+        });
+    };
+
     // we're about to find all the fields.
     //
     // first, for perf, let's grab:
@@ -72,8 +99,9 @@ pub fn value_union(
 
     // find all fields
     let mut expected_fields: Vec<_> = Vec::with_capacity(always.len());
-    let mut unexpected_fields: Vec<_> = Vec::with_capacity(element.children.len() - always.len());
-    for c in element.children.iter().flat_map(|c| c.as_element()) {
+    let mut unexpected_fields: Vec<_> =
+        Vec::with_capacity(field_parent.children.len().saturating_sub(always.len()));
+    for c in field_parent.children.iter().flat_map(|c| c.as_element()) {
         // grab namespace + name
         let (c_ns, c_name) = (&c.namespace, &c.name);
 
