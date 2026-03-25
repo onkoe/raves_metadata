@@ -12,6 +12,12 @@ This file is ordered from newest to oldest.
   - Eager parsing seems to be the same amount of "efficient" for most files, as we already gotta parse them anyway!
 - Simplify API (one `MetadataProvider`)
   - In other words, there's no longer a `MetadataProviderRaw`!
+- Add `XmpValue::Uri` support.
+- XMP type changes
+  - Add `Xmp::document_mut` method (for mutating internal values).
+  - Use struct-like parsing style for XMP unions.
+  - Make XMP struct fields require namespaces.
+- Add support for writing XMP (through #link("https://docs.rs/raves_metadata/latest/raves_metadata/xmp/struct.Xmp.html#method.write")[the `Xmp::write` method]).
 
 == v0.0.4
 

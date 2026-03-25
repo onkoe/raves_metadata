@@ -2,6 +2,14 @@
 
 This file is ordered from newest to oldest.
 
+== v0.1.0
+
+- Add `XmpIdent` type.
+- Require namespaces for XMP structs.
+- Add prefix field for XMP types.
+  - This addition permits writing default prefixes for types in our parse table.
+- Create new `XmpValue` variant, `XmpValue::Uri`, as value-like URI/URLs must be parsed in a specific way.
+
 == v0.0.2
 
 - Move IPTC type generation to a new manually evoked script.
