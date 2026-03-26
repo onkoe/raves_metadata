@@ -1,3 +1,5 @@
+use crate::providers::png::chunks::ihdr::{BitDepth, ColorType};
+
 /// An error that occurs when constructing a [`Png`] for its metadata.
 #[derive(Clone, Debug, PartialEq, PartialOrd, Hash)]
 pub enum PngConstructionError {
@@ -25,6 +27,45 @@ pub enum PngConstructionError {
     /// Failed to parse chunk header.
     NotEnoughBytesForChunkHeader,
 
+    /// In the IHDR chunk, a disallowed bit depth was found.
+    DisallowedBitDepth {
+        /// The weird bit depth value we found.
+        found_value: u8,
+    },
+
+    /// In the IHDR chunk, a disallowed bit depth and color type pair was
+    /// found.
+    BitDepthIncompatibleWithColorType {
+        /// The bit depth value provided.
+        bit_depth: BitDepth,
+
+        /// The expected color type.
+        incompatible_color_type: ColorType,
+    },
+
+    /// In the IHDR chunk, a disallowed color type byte was found.
+    DisallowedColorType {
+        /// The weird color type byte we found.
+        found_value: u8,
+    },
+
+    /// In the IHDR chunk, a weird compression method was found.
+    DisallowedCompressionMethod {
+        /// The disallowed byte value.
+        found_value: u8,
+    },
+
+    /// In the IHDR chunk, a weird filter method was found.
+    DisallowedFilterMethod {
+        /// The disallowed byte value.
+        found_value: u8,
+    },
+
+    /// In the IHDR chunk, a weird interlace method was found.
+    DisallowedInterlaceMethod {
+        /// The disallowed byte value.
+        found_value: u8,
+    },
 }
 
 impl core::fmt::Display for PngConstructionError {
