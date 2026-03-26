@@ -478,7 +478,7 @@ mod tests {
     #[test]
     fn blank_sample_with_exif() {
         logger();
-        const BLOB: &[u8] = include_bytes!("../../assets/providers/png/exif.png");
+        const BLOB: &[u8] = include_bytes!("../../../assets/providers/png/exif.png");
 
         let png: Png = Png::new(&BLOB).expect("parse PNG");
 
