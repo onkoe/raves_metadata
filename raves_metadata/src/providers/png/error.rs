@@ -11,6 +11,20 @@ pub enum PngConstructionError {
         /// The signature that was found instead.
         found: [u8; 8],
     },
+
+    /// Unexpectedly ran out of bytes when parsing a chunk.
+    OuttaBytes {
+        /// The chunk's name. (e.g., `IHDR`)
+        chunk_type: &'static str,
+        /// The number of bytes that we tried to get.
+        expected: u8,
+        /// The number of bytes that were actually remaining.
+        remaining: u8,
+    },
+
+    /// Failed to parse chunk header.
+    NotEnoughBytesForChunkHeader,
+
 }
 
 impl core::fmt::Display for PngConstructionError {
@@ -32,8 +46,29 @@ impl core::fmt::Display for PngConstructionError {
                     "{NOT_A_PNG_MSG}. Signature was: `{found:?}`. (Not valid UTF-8.)`"
                 ),
             },
+
+            Self::OuttaBytes {
+                chunk_type,
+                expected,
+                remaining,
+            } => write!(
+                f,
+                "Unexpectedly ran out of bytes when parsing chunk: `{chunk_type}`. \
+                Expected `{expected}` more bytes, \
+                but only found `{remaining}` bytes.",
+            ),
+
+            other_TODO => todo!(),
         }
     }
 }
 
 impl core::error::Error for PngConstructionError {}
+
+/// An error that can occur when writing a PNG back to disk.
+#[derive(Clone, Debug, PartialEq, PartialOrd, Hash)]
+pub enum PngWriteError {
+    CantWriteToBuf {},
+}
+
+fn TODO_impl_error_for_PngWriteError() {}

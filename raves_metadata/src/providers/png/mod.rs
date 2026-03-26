@@ -13,6 +13,7 @@ use winnow::{
     token::{literal, rest, take},
 };
 
+pub mod chunks;
 mod error;
 
 pub use error::PngConstructionError;
