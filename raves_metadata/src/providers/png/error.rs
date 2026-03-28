@@ -66,6 +66,18 @@ pub enum PngConstructionError {
         /// The disallowed byte value.
         found_value: u8,
     },
+
+    /// In the PLTE chunk, the chunk length was not a multiple of 3.
+    PlteNotMultipleOfThree {
+        /// The chunk length we got.
+        found_chunk_length: u32,
+    },
+
+    /// In the PLTE chunk, there were too many palettes (>256).
+    PlteTooManyPalettes {
+        /// The number of palettes found.
+        palette_ct: u32,
+    },
 }
 
 impl core::fmt::Display for PngConstructionError {
@@ -110,6 +122,12 @@ impl core::error::Error for PngConstructionError {}
 #[derive(Clone, Debug, PartialEq, PartialOrd, Hash)]
 pub enum PngWriteError {
     CantWriteToBuf {},
+
+    /// On the PLTE chunk, the number of palettes was either 0 or >256.
+    PltePaletteCount {
+        /// The number of palettes.
+        palette_ct: u32,
+    },
 }
 
 fn TODO_impl_error_for_PngWriteError() {}

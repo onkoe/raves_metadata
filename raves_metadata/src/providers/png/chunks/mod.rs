@@ -7,6 +7,7 @@ use winnow::{Parser, binary::be_u32, error::EmptyError, token::take};
 use crate::providers::png::{PngConstructionError, error::PngWriteError};
 
 pub mod ihdr;
+pub mod plte;
 
 pub trait Chunk: Sized {
     /// The "type" identifier for a PNG chunk.
