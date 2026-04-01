@@ -19,9 +19,9 @@ pub enum PngConstructionError {
         /// The chunk's name. (e.g., `IHDR`)
         chunk_type: &'static str,
         /// The number of bytes that we tried to get.
-        expected: u8,
+        expected: u32,
         /// The number of bytes that were actually remaining.
-        remaining: u8,
+        remaining: u32,
     },
 
     /// Failed to parse chunk header.

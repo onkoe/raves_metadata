@@ -6,6 +6,7 @@ use winnow::{Parser, binary::be_u32, error::EmptyError, token::take};
 
 use crate::providers::png::{PngConstructionError, error::PngWriteError};
 
+pub mod idat;
 pub mod ihdr;
 pub mod plte;
 
@@ -51,8 +52,8 @@ pub trait Chunk: Sized {
                 );
                 PngConstructionError::OuttaBytes {
                     chunk_type: Self::TYPE_STR,
-                    expected: 1_u8,
-                    remaining: 0_u8,
+                    expected: 1_u32,
+                    remaining: 0_u32,
                 }
             })
     }
@@ -88,8 +89,8 @@ pub trait Chunk: Sized {
                 );
                 PngConstructionError::OuttaBytes {
                     chunk_type: Self::TYPE_STR,
-                    expected: 2_u8,
-                    remaining: blob.len() as u8,
+                    expected: 2_u32,
+                    remaining: blob.len() as u32,
                 }
             })
     }
@@ -125,8 +126,8 @@ pub trait Chunk: Sized {
                 );
                 PngConstructionError::OuttaBytes {
                     chunk_type: Self::TYPE_STR,
-                    expected: 4_u8,
-                    remaining: blob.len() as u8,
+                    expected: 4_u32,
+                    remaining: blob.len() as u32,
                 }
             })
     }
@@ -140,6 +141,25 @@ pub trait Chunk: Sized {
         buf.write_all(&value.to_be_bytes()).map_err(|_| {
             log::error!(
                 "Failed to write `u32` value to buffer! \
+                Buffer type: {}, \
+                Chunk type: {}, \
+                Field: {field}",
+                core::any::type_name_of_val(buf),
+                Self::TYPE_STR
+            );
+            PngWriteError::CantWriteToBuf {}
+        })
+    }
+
+    /// Writes a byte slice to the given buffer.
+    fn write_byte_slice<W: std::io::Write>(
+        value: &[u8],
+        buf: &mut W,
+        field: &'static str,
+    ) -> Result<(), PngWriteError> {
+        buf.write_all(value).map_err(|_| {
+            log::error!(
+                "Failed to write byte slice to buffer! \
                 Buffer type: {}, \
                 Chunk type: {}, \
                 Field: {field}",
