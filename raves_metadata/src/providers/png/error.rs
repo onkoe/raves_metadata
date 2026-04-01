@@ -78,6 +78,12 @@ pub enum PngConstructionError {
         /// The number of palettes found.
         palette_ct: u32,
     },
+
+    /// The IEND chunk had a non-zero chunk length, but that's not allowed.
+    IendHadData {
+        /// The (non-zero) chunk length for this chunk.
+        chunk_length: u32,
+    },
 }
 
 impl core::fmt::Display for PngConstructionError {
