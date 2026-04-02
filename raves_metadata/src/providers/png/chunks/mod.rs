@@ -7,6 +7,7 @@ use winnow::{Parser, binary::be_u32, error::EmptyError, token::take};
 use crate::providers::png::{PngConstructionError, error::PngWriteError};
 
 pub mod chrm;
+pub mod gama;
 pub mod idat;
 pub mod iend;
 pub mod ihdr;
