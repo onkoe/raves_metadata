@@ -10,6 +10,7 @@ pub mod idat;
 pub mod iend;
 pub mod ihdr;
 pub mod plte;
+pub mod trns;
 
 /// A "chunk" of PNG data.
 pub trait Chunk: Sized {
@@ -183,6 +184,9 @@ pub trait Chunk: Sized {
 /// crate's internal parser provides the data.
 #[derive(Clone, Debug, PartialEq, PartialOrd, Hash)]
 pub enum ChunkContext<'par> {
+    /// The primary transparency info chunk.
+    Trns(&'par trns::TrnsContext),
+
     /// This chunk doesn't take context.
     Other,
 }

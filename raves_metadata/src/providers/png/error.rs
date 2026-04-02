@@ -1,4 +1,7 @@
-use crate::providers::png::chunks::ihdr::{BitDepth, ColorType};
+use crate::providers::png::chunks::{
+    ihdr::{BitDepth, ColorType},
+    trns::TrnsContext,
+};
 
 /// An error that occurs when constructing a [`Png`] for its metadata.
 #[derive(Clone, Debug, PartialEq, PartialOrd, Hash)]
@@ -84,6 +87,10 @@ pub enum PngConstructionError {
         /// The (non-zero) chunk length for this chunk.
         chunk_length: u32,
     },
+
+    /// The tRNS chunk should not exist if the color type is disallowed, but
+    /// the parser found a tRNS chunk in the datastream anyway.
+    TrnsGivenDisallowedType,
 }
 
 impl core::fmt::Display for PngConstructionError {
