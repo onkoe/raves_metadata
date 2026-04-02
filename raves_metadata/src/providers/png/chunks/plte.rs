@@ -1,4 +1,8 @@
-use crate::providers::png::{PngConstructionError, chunks::PngChunkHeader, error::PngWriteError};
+use crate::providers::png::{
+    PngConstructionError,
+    chunks::{ChunkContext, PngChunkHeader},
+    error::PngWriteError,
+};
 
 /// A collection of palettes.
 #[derive(Clone, Debug, PartialEq, PartialOrd, Hash)]
@@ -13,7 +17,11 @@ pub const MAX_PALETTES: u32 = 256_u32;
 impl super::Chunk for Plte {
     const TYPE: [u8; 4] = *b"PLTE";
 
-    fn read(blob: &mut &[u8], header: super::PngChunkHeader) -> Result<Self, PngConstructionError> {
+    fn read(
+        blob: &mut &[u8],
+        header: super::PngChunkHeader,
+        _context: ChunkContext,
+    ) -> Result<Self, PngConstructionError> {
         // check if chunk len is messed up
         if !header.chunk_length.is_multiple_of(3) || blob.is_empty() {
             log::error!(

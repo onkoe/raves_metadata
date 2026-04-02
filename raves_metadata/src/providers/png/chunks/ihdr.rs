@@ -1,4 +1,8 @@
-use crate::providers::png::{PngConstructionError, chunks::PngChunkHeader, error::PngWriteError};
+use crate::providers::png::{
+    PngConstructionError,
+    chunks::{ChunkContext, PngChunkHeader},
+    error::PngWriteError,
+};
 
 /// The first chunk in the PNG datastream.
 #[derive(Clone, Debug, PartialEq, PartialOrd, Hash)]
@@ -19,7 +23,11 @@ pub struct Ihdr {
 impl super::Chunk for Ihdr {
     const TYPE: [u8; 4] = [0x49, 0x48, 0x44, 0x52];
 
-    fn read(blob: &mut &[u8], header: PngChunkHeader) -> Result<Self, PngConstructionError> {
+    fn read(
+        blob: &mut &[u8],
+        header: PngChunkHeader,
+        _context: ChunkContext,
+    ) -> Result<Self, PngConstructionError> {
         let width_px: u32 = Self::read_u32(blob, "width")?;
         let height_px: u32 = Self::read_u32(blob, "height")?;
 

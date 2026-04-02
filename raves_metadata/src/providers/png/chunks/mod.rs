@@ -11,6 +11,7 @@ pub mod iend;
 pub mod ihdr;
 pub mod plte;
 
+/// A "chunk" of PNG data.
 pub trait Chunk: Sized {
     /// The "type" identifier for a PNG chunk.
     ///
@@ -36,7 +37,11 @@ pub trait Chunk: Sized {
 
     /// Reads this `Chunk` from the `blob`, given a chunk header that's already
     /// been parsed out of the blob.
-    fn read(blob: &mut &[u8], header: PngChunkHeader) -> Result<Self, PngConstructionError>;
+    fn read(
+        blob: &mut &[u8],
+        header: PngChunkHeader,
+        context: ChunkContext,
+    ) -> Result<Self, PngConstructionError>;
 
     /// Writes this chunk into the given buffer, `buf`.
     fn write<W: std::io::Write>(&self, buf: &mut W) -> Result<(), PngWriteError>;
@@ -170,6 +175,16 @@ pub trait Chunk: Sized {
             PngWriteError::CantWriteToBuf {}
         })
     }
+}
+
+/// Context relating to parsing/writing a chunk.
+///
+/// Note that the 'par lifetime is related to parser borrows -- meaning the
+/// crate's internal parser provides the data.
+#[derive(Clone, Debug, PartialEq, PartialOrd, Hash)]
+pub enum ChunkContext<'par> {
+    /// This chunk doesn't take context.
+    Other,
 }
 
 /// A header for a PNG chunk.

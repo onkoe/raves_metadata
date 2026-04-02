@@ -1,5 +1,5 @@
 use crate::providers::png::{
-    chunks::{Chunk, PngChunkHeader},
+    chunks::{Chunk, ChunkContext, PngChunkHeader},
     error::{PngConstructionError, PngWriteError},
 };
 
@@ -17,6 +17,7 @@ impl Chunk for Iend {
     fn read(
         _blob: &mut &[u8],
         header: super::PngChunkHeader,
+        _context: ChunkContext,
     ) -> Result<Self, PngConstructionError> {
         // this chunk must be zero length. so let's check that!
         if header.chunk_length != 0_u32 {

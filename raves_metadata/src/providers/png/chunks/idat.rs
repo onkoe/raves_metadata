@@ -2,7 +2,7 @@ use winnow::{Parser, error::EmptyError, token::take};
 
 use crate::providers::png::{
     PngConstructionError,
-    chunks::{Chunk, PngChunkHeader},
+    chunks::{Chunk, ChunkContext, PngChunkHeader},
     error::PngWriteError,
 };
 
@@ -18,7 +18,11 @@ pub struct Idat {
 impl Chunk for Idat {
     const TYPE: [u8; 4] = *b"IDAT";
 
-    fn read(blob: &mut &[u8], header: super::PngChunkHeader) -> Result<Self, PngConstructionError> {
+    fn read(
+        blob: &mut &[u8],
+        header: super::PngChunkHeader,
+        _context: ChunkContext,
+    ) -> Result<Self, PngConstructionError> {
         let mut entries: Vec<u8> = Vec::with_capacity(header.chunk_length as usize);
 
         let slice_len: usize = blob.len();
