@@ -91,6 +91,13 @@ pub enum PngConstructionError {
     /// The tRNS chunk should not exist if the color type is disallowed, but
     /// the parser found a tRNS chunk in the datastream anyway.
     TrnsGivenDisallowedType,
+
+    /// The iCCP chunk's compression method should always be zero, but another
+    /// value was found.
+    IccpUnknownCompressionValue {
+        /// The non-zero value that was found.
+        value: u8,
+    },
 }
 
 impl core::fmt::Display for PngConstructionError {
@@ -140,6 +147,13 @@ pub enum PngWriteError {
     PltePaletteCount {
         /// The number of palettes.
         palette_ct: u32,
+    },
+
+    /// An iCCP chunk profile name should be fully Latin-1-encoded, but a
+    /// character wasn't in Latin-1 bounds.
+    IccpProfileNameNotLatin1 {
+        /// The violating character.
+        c: u8,
     },
 }
 

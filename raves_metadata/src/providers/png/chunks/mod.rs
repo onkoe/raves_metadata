@@ -8,6 +8,7 @@ use crate::providers::png::{PngConstructionError, error::PngWriteError};
 
 pub mod chrm;
 pub mod gama;
+pub mod iccp;
 pub mod idat;
 pub mod iend;
 pub mod ihdr;
