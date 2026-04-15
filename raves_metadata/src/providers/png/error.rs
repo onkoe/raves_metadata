@@ -92,6 +92,19 @@ pub enum PngConstructionError {
     /// the parser found a tRNS chunk in the datastream anyway.
     TrnsGivenDisallowedType,
 
+    /// An iCCP chunk profile name should be fully Latin-1-encoded, but a
+    /// character wasn't in Latin-1 bounds.
+    IccpProfileNameNotLatin1 {
+        /// The violating character.
+        c: u8,
+    },
+
+    /// The iCCP chunk profile name violated PNG's structural requirements.
+    IccpInvalidProfileName {
+        /// The reason the profile name was invalid.
+        reason: &'static str,
+    },
+
     /// The iCCP chunk's compression method should always be zero, but another
     /// value was found.
     IccpUnknownCompressionValue {
@@ -154,6 +167,12 @@ pub enum PngWriteError {
     IccpProfileNameNotLatin1 {
         /// The violating character.
         c: u8,
+    },
+
+    /// The iCCP chunk profile name violated PNG's structural requirements.
+    IccpInvalidProfileName {
+        /// The reason the profile name was invalid.
+        reason: &'static str,
     },
 }
 

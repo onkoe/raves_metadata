@@ -23,18 +23,40 @@ impl Chunk for Iccp {
         // check that there's no context
         debug_assert_eq!(context, ChunkContext::Other);
 
-        // grab profile name
-        let mut profile_name: String = String::new();
+        let mut profile_name_bytes: Vec<u8> = Vec::with_capacity(79);
+        let mut found_null_terminator: bool = false;
+
         for _ in 0..79 {
-            // grab a byte
             let byte: u8 = Self::read_u8(blob, "profile name (one byte)")?;
             if byte == 0x00 {
+                found_null_terminator = true;
                 break;
             }
 
-            // push it to the string
-            profile_name.push(byte as char);
+            profile_name_bytes.push(byte);
         }
+
+        if !found_null_terminator {
+            let null_separator: u8 = Self::read_u8(blob, "null separator")?;
+            if null_separator != 0x00 {
+                return Err(PngConstructionError::IccpInvalidProfileName {
+                    reason: "profile name must be terminated by a NUL separator after 1-79 bytes",
+                });
+            }
+        }
+
+        // make sure the profile name is up to spec
+        validate_profile_name_bytes(&profile_name_bytes).map_err(|err| match err {
+            ProfileNameError::NotLatin1 { c } => {
+                PngConstructionError::IccpProfileNameNotLatin1 { c }
+            }
+            ProfileNameError::InvalidStructure { reason } => {
+                PngConstructionError::IccpInvalidProfileName { reason }
+            }
+        })?;
+
+        // write the profile name into a string
+        let profile_name: String = profile_name_bytes.into_iter().map(char::from).collect();
 
         // grab compression method
         let compression_method_raw: u8 = Self::read_u8(blob, "compression method")?;
@@ -47,12 +69,8 @@ impl Chunk for Iccp {
         };
 
         // read the rest of the compressed profile
-        let profile_len: usize = profile_name.len().saturating_sub(2);
-        let mut compressed_profile: Vec<u8> = Vec::with_capacity(profile_len);
-        for _ in 0..profile_len {
-            let byte: u8 = Self::read_u8(blob, "compressed profile (one byte)")?;
-            compressed_profile.push(byte);
-        }
+        let compressed_profile: Vec<u8> = blob.to_vec();
+        *blob = &[];
 
         Ok(Self {
             header,
@@ -66,26 +84,35 @@ impl Chunk for Iccp {
         // write the header
         self.header.write(buf)?;
 
-        // profile name
-        for c in self.profile_name.chars().map(|c: char| c as u8) {
-            if profile_name_char_is_allowed(c) {
-                Self::write_u8(c, buf, "profile name (one byte)")?;
-            } else {
-                log::error!("iCCP chunk: A character in the profile name was not Latin-1: `{c}`");
-                return Err(PngWriteError::IccpProfileNameNotLatin1 { c });
+        let profile_name_bytes: Vec<u8> = self
+            .profile_name
+            .chars()
+            .map(|c: char| {
+                let code_point: u32 = c.into();
+                u8::try_from(code_point).map_err(|_| PngWriteError::IccpInvalidProfileName {
+                    reason: "profile name must contain only Latin-1 code points",
+                })
+            })
+            .collect::<Result<Vec<u8>, PngWriteError>>()?;
+
+        validate_profile_name_bytes(&profile_name_bytes).map_err(|err| match err {
+            ProfileNameError::NotLatin1 { c } => PngWriteError::IccpProfileNameNotLatin1 { c },
+            ProfileNameError::InvalidStructure { reason } => {
+                PngWriteError::IccpInvalidProfileName { reason }
             }
-        }
+        })?;
+
+        // profile name
+        Self::write_byte_slice(&profile_name_bytes, buf, "profile name")?;
 
         // NUL terminator on profile name
         Self::write_u8(0_u8, buf, "null separator")?;
 
         // compression method (will always be 0)
-        Self::write_u8(0_u8, buf, "compression method")?;
+        Self::write_u8(self.compression_method as u8, buf, "compression method")?;
 
         // compressed profile
-        for byte in &self.compressed_profile {
-            Self::write_u8(*byte, buf, "compressed profile (one byte)")?;
-        }
+        Self::write_byte_slice(&self.compressed_profile, buf, "compressed profile")?;
 
         Ok(())
     }
@@ -97,7 +124,51 @@ pub enum CompressionMethod {
     ZlibDeflate = 0,
 }
 
-/// Checks if a character in the profile name is allowed.
-const fn profile_name_char_is_allowed(c: u8) -> bool {
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum ProfileNameError {
+    NotLatin1 { c: u8 },
+    InvalidStructure { reason: &'static str },
+}
+
+fn validate_profile_name_bytes(bytes: &[u8]) -> Result<(), ProfileNameError> {
+    if bytes.is_empty() {
+        return Err(ProfileNameError::InvalidStructure {
+            reason: "profile name must contain at least one byte",
+        });
+    }
+
+    if bytes.len() > 79 {
+        return Err(ProfileNameError::InvalidStructure {
+            reason: "profile name must be 79 bytes or fewer",
+        });
+    }
+
+    let mut prev_was_space: bool = false;
+    for (idx, &byte) in bytes.iter().enumerate() {
+        if !profile_name_byte_is_allowed(byte) {
+            return Err(ProfileNameError::NotLatin1 { c: byte });
+        }
+
+        let is_space: bool = byte == b' ';
+        if (idx == 0 || idx + 1 == bytes.len()) && is_space {
+            return Err(ProfileNameError::InvalidStructure {
+                reason: "profile name may not have leading or trailing spaces",
+            });
+        }
+
+        if prev_was_space && is_space {
+            return Err(ProfileNameError::InvalidStructure {
+                reason: "profile name may not contain consecutive spaces",
+            });
+        }
+
+        prev_was_space = is_space;
+    }
+
+    Ok(())
+}
+
+/// Checks if a byte in the profile name is allowed.
+const fn profile_name_byte_is_allowed(c: u8) -> bool {
     (c >= 0x20 && c <= 0x7E) || (c >= 0xA1)
 }
